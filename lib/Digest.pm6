@@ -1,4 +1,3 @@
-#!/usr/local/bin/perl6
 module Digest;
 =begin credit
 Crypto-JS v2.0.0

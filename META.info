@@ -1,0 +1,8 @@
+{
+     "name" : "Digest",
+     "version" : "0.1.0",
+     "description" : "Pure perl6 implementation of digest algorigthms.",
+     "author" : "Lucien Grondin",
+     "depends" : [ ],
+     "source-url" : "git://github.com/grondilu/libdigest-perl6.git"
+ }
