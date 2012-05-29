@@ -11,35 +11,37 @@ sub rotl($n, $b) { $n +< $b +| $n +> (32 - $b) }
 
 sub infix:<m+> { ($^x + $^y) % 2**32 }
 
-# Convert a byte array to big-endian 32-bit words
-sub bytesToWords(@bytes) {
-    my @output;
-    loop (my ($i, $b) = (0, 0); $i < @bytes.elems; $i++, $b += 8) {
-	@output[$b +> 5] +|= @bytes[$i] +< (24 - $b % 32);
+package util {
+    #| Convert a byte array to big-endian 32-bit words
+    our sub bytesToWords(@bytes) {
+	my @output;
+	loop (my ($i, $b) = (0, 0); $i < @bytes.elems; $i++, $b += 8) {
+	    @output[$b +> 5] +|= @bytes[$i] +< (24 - $b % 32);
+	}
+	return @output;
     }
-    return @output;
-}
 
-# Convert a byte array to little-endian 32-bit words
-sub bytesToLWords(@bytes) {
-    my @output = 0 xx @bytes +> 2;
-    loop (my $i = 0; $i < @bytes * 8; $i += 8) {
-	@output[$i +> 5] +|= (@bytes[$i div 8] +& 0xFF) * 2**($i % 32);
+    #| Convert a byte array to little-endian 32-bit words
+    our sub bytesToLWords(@bytes) {
+	my @output = 0 xx @bytes +> 2;
+	loop (my $i = 0; $i < @bytes * 8; $i += 8) {
+	    @output[$i +> 5] +|= (@bytes[$i div 8] +& 0xFF) * 2**($i % 32);
+	}
+	return @output;
     }
-    return @output;
-}
 
-# Convert little-endian 32-bit words to a byte array
-sub lWordsToBytes(@words) {
-    gather loop (my $i = 0; $i < @words * 32; $i += 8) {
-	take @words[$i +> 5] div 2**($i % 32) +& 0xff;
+    #| Convert little-endian 32-bit words to a byte array
+    our sub lWordsToBytes(@words) {
+	gather loop (my $i = 0; $i < @words * 32; $i += 8) {
+	    take @words[$i +> 5] div 2**($i % 32) +& 0xff;
+	}
     }
-};
 
-# Convert big-endian 32-bit words to a byte array
-sub wordsToBytes(@words) {
-    gather loop (my $b = 0; $b < @words.elems * 32; $b += 8) {
-	take (@words[$b +> 5] +> (24 - $b % 32)) +& 0xFF;
+    #| Convert big-endian 32-bit words to a byte array
+    our sub wordsToBytes(@words) {
+	gather loop (my $b = 0; $b < @words.elems * 32; $b += 8) {
+	    take (@words[$b +> 5] +> (24 - $b % 32)) +& 0xFF;
+	}
     }
 }
 
@@ -67,11 +69,11 @@ package sha256 {
 	0x90BEFFFA 0xA4506CEB 0xBEF9A3F7 0xC67178F2
     >;
 
-    our proto core($) {*}
-    multi core(Str $s) returns Buf { core Buf.new: $s.ords }
-    multi core(Buf $data) returns Buf {
+    our proto bin($) {*}
+    multi bin(Str $s) returns Buf { bin Buf.new: $s.ords }
+    multi bin(Buf $data) returns Buf {
 	# turning the message into an array of words
-	my @word = bytesToWords my @b = $data.list;
+	my @word = Digest::util::bytesToWords my @b = $data.list;
 	my int $l = @b * 8;
 
 	# Padding
@@ -85,7 +87,7 @@ package sha256 {
 	;
 
 	my @w;
-	# Main loop
+	#| Main loop
 	loop (my int $i = 0; $i < @word.elems; $i = $i + 16) {
 	    my @h = @H;
 	    loop (my int $j = 0; $j < 64; $j = $j + 1) {
@@ -105,12 +107,13 @@ package sha256 {
 	    }
 	    @H = @H Z[m+] @h;
 	}
-	return Buf.new: wordsToBytes @H;
+	return Buf.new: Digest::util::wordsToBytes @H;
     }
-    our sub hex($data) { [~] core($data).list».fmt("%02x") }
+    our sub hex($data) { [~] bin($data).list».fmt("%02x") }
 }
 
 package rmd160 {
+
     constant r1 = <
 	0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
 	7 4 13 1 10 6 15 3 12 0 9 5 2 14 11 8
@@ -166,10 +169,10 @@ package rmd160 {
 	$j < 80 ?? 0x00000000 !!
 	!!! "out of range";
     }
-    our proto core($) {*}
-    multi core(Str $s) returns Buf { core Buf.new: $s.ords }
-    multi core(Buf $data) returns Buf {
-	my @word = bytesToLWords my @b = $data.list;
+    our proto bin($) {*}
+    multi bin(Str $s) returns Buf { bin Buf.new: $s.ords }
+    multi bin(Buf $data) returns Buf {
+	my @word = Digest::util::bytesToLWords my @b = $data.list;
 	my $len = @b * 8;
 
 	@word[$len +> 5] +|= 0x80 +< ($len % 32);
@@ -192,7 +195,8 @@ package rmd160 {
 	    }
 	    @h = @h[1..4,^1] Z[m+] @X[2..4,^2] Z[m+] @Y[3..4,^3];
 	}
-	return Buf.new: lWordsToBytes @h;
+	return Buf.new: Digest::util::lWordsToBytes @h;
     }
-    our sub hex($data) returns Str { [~] core($data).list».fmt("%02x") }
+    our sub hex($data) returns Str { [~] bin($data).list».fmt("%02x") }
+
 }
