@@ -73,7 +73,7 @@ package sha256 {
     multi bin(Str $s) returns Buf { bin Buf.new: $s.ords }
     multi bin(Buf $data) returns Buf {
 	# turning the message into an array of words
-	my @word = Digest::util::bytesToWords my @b = $data.list;
+	my @word = util::bytesToWords my @b = $data.list;
 	my int $l = @b * 8;
 
 	# Padding
@@ -107,7 +107,7 @@ package sha256 {
 	    }
 	    @H = @H Z[m+] @h;
 	}
-	return Buf.new: Digest::util::wordsToBytes @H;
+	return Buf.new: util::wordsToBytes @H;
     }
     our sub hex($data) { [~] bin($data).list».fmt("%02x") }
 }
@@ -172,7 +172,7 @@ package rmd160 {
     our proto bin($) {*}
     multi bin(Str $s) returns Buf { bin Buf.new: $s.ords }
     multi bin(Buf $data) returns Buf {
-	my @word = Digest::util::bytesToLWords my @b = $data.list;
+	my @word = util::bytesToLWords my @b = $data.list;
 	my $len = @b * 8;
 
 	@word[$len +> 5] +|= 0x80 +< ($len % 32);
@@ -195,7 +195,7 @@ package rmd160 {
 	    }
 	    @h = @h[1..4,^1] Z[m+] @X[2..4,^2] Z[m+] @Y[3..4,^3];
 	}
-	return Buf.new: Digest::util::lWordsToBytes @h;
+	return Buf.new: util::lWordsToBytes @h;
     }
     our sub hex($data) returns Str { [~] bin($data).list».fmt("%02x") }
 
