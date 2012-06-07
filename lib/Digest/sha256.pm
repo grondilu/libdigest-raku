@@ -1,5 +1,25 @@
 module Digest::sha256;
 use Digest::util;
+=begin DESCRIPTION
+This is a I<pure Perl6> implementation of the SHA256 digest algorithm.
+
+It mainly consists of two non-exported multis:
+=item1 C<bin>, returning a buffer;
+=item2 C<hex>, returning an hexadecimal representation.
+
+Both subroutines can receive a buffer or a string as a parameter.
+
+Two aliases are exported:  C<sha256> and C<sha256_hex>.
+=end DESCRIPTION
+
+=begin SYNOPSIS
+    use Digest::sha256;
+
+    my Buf $h = Digest::sha256::bin "foo bar";
+    my Str $h = Digest::sha256::hex "foo bar";
+    my Buf $h = Digest::sha256::bin my Buf $b .= new: (^256).roll: ^100;
+    my Str $h = Digest::sha256::hex my Buf $b .= new: (^256).roll: ^100;
+=end SYNOPSIS
 
 constant K = <
     0x428A2F98 0x71374491 0xB5C0FBCF 0xE9B5DBA5
@@ -63,6 +83,9 @@ multi bin(Buf $data) returns Buf {
     }
     return Buf.new: Digest::util::wordsToBytes @H;
 }
+
 our sub hex($data) { [~] bin($data).list».fmt("%02x") }
 
+our sub sha256($x)     is export { bin $x }
+our sub sha256_hex($x) is export { hex $x }
 # vim: ft=perl6
