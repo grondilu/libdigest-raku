@@ -1,4 +1,4 @@
-module Digest::util;
+module Digest::Util;
 
 our sub rotr($n, $b) is export { $n +> $b +| $n +< (32 - $b) }
 our sub rotl($n, $b) is export { $n +< $b +| $n +> (32 - $b) }

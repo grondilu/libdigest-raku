@@ -1,5 +1,5 @@
-module Digest::rmd160;
-use Digest::util;
+module Digest::RIPEMD160;
+use Digest::Util;
 
 constant r1 = <
     0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
@@ -59,7 +59,7 @@ sub K2($j) {
 our proto bin($) {*}
 multi bin(Str $s) returns Buf { bin Buf.new: $s.ords }
 multi bin(Buf $data) returns Buf {
-    my @word = Digest::util::bytesToLWords my @b = $data.list;
+    my @word = Digest::Util::bytesToLWords my @b = $data.list;
     my $len = @b * 8;
 
     @word[$len +> 5] +|= 0x80 +< ($len % 32);
@@ -82,7 +82,7 @@ multi bin(Buf $data) returns Buf {
 	}
 	@h = @h[1..4,^1] Z[m+] @X[2..4,^2] Z[m+] @Y[3..4,^3];
     }
-    return Buf.new: Digest::util::lWordsToBytes @h;
+    return Buf.new: Digest::Util::lWordsToBytes @h;
 }
 our sub hex($data) returns Str { [~] bin($data).list».fmt("%02x") }
 

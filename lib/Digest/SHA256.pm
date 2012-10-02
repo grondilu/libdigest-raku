@@ -1,5 +1,5 @@
-module Digest::sha256;
-use Digest::util;
+module Digest::SHA256;
+use Digest::Util;
 =begin DESCRIPTION
 This is a I<pure Perl6> implementation of the SHA256 digest algorithm.
 
@@ -47,7 +47,7 @@ our proto bin($) {*}
 multi bin(Str $s) returns Buf { bin Buf.new: $s.ords }
 multi bin(Buf $data) returns Buf {
     # turning the message into an array of words
-    my @word = Digest::util::bytesToWords my @b = $data.list;
+    my @word = Digest::Util::bytesToWords my @b = $data.list;
     my int $l = @b * 8;
 
     # Padding
@@ -81,7 +81,7 @@ multi bin(Buf $data) returns Buf {
 	}
 	@H = @H Z[m+] @h;
     }
-    return Buf.new: Digest::util::wordsToBytes @H;
+    return Buf.new: Digest::Util::wordsToBytes @H;
 }
 
 our sub hex($data) { [~] bin($data).list».fmt("%02x") }
