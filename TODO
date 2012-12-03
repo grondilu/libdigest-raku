@@ -1,0 +1,5 @@
+
+- tidy up Digest::SHA
+- implement MD5
+- do not export functions by default.  For some reason I can't do use the 'use MyModule
+  <mySymbol>' syntax properly.  Maybe it's NYI.
