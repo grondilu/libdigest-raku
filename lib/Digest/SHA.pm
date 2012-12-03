@@ -65,7 +65,7 @@ sub init(&f, $n) {
 sub rotr($n, $b) { $n +> $b +| $n +< (32 - $b) }
  
 our sub sha256(Buf $data) returns Buf is export {
-    constant K = init * **(1/3), 64;
+    my \K = init * **(1/3), 64;
     my $l = 8 * my @b = $data.list;
     push @b, 0x80; push @b, 0 until (8*@b-448) %% 512;
  
