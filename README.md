@@ -7,7 +7,7 @@ argument.  It's up to the user to turn it into an hex string if he needs to.
     say my $sha256 = sha256 "hello".encode: 'ascii';
     
     use Digest::RIPEMD;
-    say rmd160 "bye";
+    say rmd160 "bye".encode: "ascii";
 
     sub buf_to_hex { [~] $^buf.list».fmt: "%02x" }
     say buf_to_hex $sha256;
