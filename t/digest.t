@@ -5,9 +5,9 @@ use Digest;
 
 plan 3;
 
-is md5('d41d8cd98f00b204e9800998ecf8427e'.encode: 'ascii').list».fmt("%02x").join, '', "empty string";
-is md5('0cc175b9c0f1b6a831c399e269772661'.encode: 'ascii').list».fmt("%02x").join, 'a', "a";
-is md5('d41d8cd98f00b204e9800998ecf8427e'.encode: 'ascii').list».fmt("%02x").join, 'abc', "abc";
+is md5(''.encode: 'ascii').list».fmt("%02x").join, 'd41d8cd98f00b204e9800998ecf8427e', "empty string";
+is md5('a'.encode: 'ascii').list».fmt("%02x").join, '0cc175b9c0f1b6a831c399e269772661', "a";
+is md5('abc'.encode: 'ascii').list».fmt("%02x").join, '900150983cd24fb0d6963f7d28e17f72', "abc";
 =END
 for 'd41d8cd98f00b204e9800998ecf8427e', '',
 '0cc175b9c0f1b6a831c399e269772661', 'a',
