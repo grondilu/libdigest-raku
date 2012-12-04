@@ -14,6 +14,8 @@ argument.  It's up to the user to turn it into an hex string if he needs to.
 
 Currently implemented:
 
+* Digest
+  - md5
 * Digest::SHA :
   - sha256
   - sha1
