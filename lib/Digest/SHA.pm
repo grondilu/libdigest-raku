@@ -46,7 +46,9 @@ sub sha1-block(@H is rw, @M)
     @H «⊕=» ($A,$B,$C,$D,$E);
 }
  
-our sub sha1(Buf $msg) returns Buf is export {
+proto sha1($) returns Buf is export {*}
+multi sha1(Str $str where all($str.ords) < 128 ) { sha1 $str.encode: 'ascii' }
+multi sha1(Buf $msg) {
     my @M = sha1-pad($msg);
     my @H = 0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0;
     sha1-block(@H,@M[$_..$_+15]) for 0,16...^+@M;
@@ -64,7 +66,9 @@ sub init(&f, $n) {
 }
 sub rotr($n, $b) { $n +> $b +| $n +< (32 - $b) }
  
-our sub sha256(Buf $data) returns Buf is export {
+proto sha256($) returns Buf is export {*}
+multi sha256(Str $str where all($str.ords) < 128 ) { sha256 $str.encode: 'ascii' }
+multi sha256(Buf $data) {
     my \K = init * **(1/3), 64;
     my $l = 8 * my @b = $data.list;
     push @b, 0x80; push @b, 0 until (8*@b-448) %% 512;

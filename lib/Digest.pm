@@ -41,8 +41,9 @@ sub md5-block(@H is rw, @X)
     @H «⊞=» ($A, $B, $C, $D);
 }
  
-sub md5(Buf $msg --> Buf) is export
-{
+proto md5($msg) returns Buf is export {*}
+multi md5($msg where all($msg.ords) < 128) { md5 $msg.encode: 'ascii' }
+multi md5(Buf $msg) {
     my @M = md5-pad($msg);
     my @H = 0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476;
     md5-block(@H, @M[$_ .. $_+15]) for 0, 16 ...^ +@M;
