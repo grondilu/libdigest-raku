@@ -60,16 +60,15 @@ multi sha1(Buf $msg) {
     }
 }
 
-sub init(&f, $n) {
-    map { (($_ - .Int)*2**32).Int },
-    map &f, (grep *.is-prime, 2 .. *)[^$n]
-}
+constant primes = grep &is-prime, 2 .. *;
+sub init(&f) { map { (($_ - .Int)*2**32).Int }, map &f, primes }
+
 sub rotr($n, $b) { $n +> $b +| $n +< (32 - $b) }
  
 proto sha256($) returns Buf is export {*}
 multi sha256(Str $str where all($str.ords) < 128 ) { sha256 $str.encode: 'ascii' }
 multi sha256(Buf $data) {
-    my \K = init * **(1/3), 64;
+    my \K = init(* **(1/3))[^64];
     my $l = 8 * my @b = $data.list;
     push @b, 0x80; push @b, 0 until (8*@b-448) %% 512;
  
@@ -78,7 +77,7 @@ multi sha256(Buf $data) {
         take reduce * *256 + *, $a, $b, $c, $d;
     }
  
-    my @H = init &sqrt, 8;
+    my @H = init(&sqrt)[^8];
     my @w;
     loop (my $i = 0; $i < @word.elems; $i += 16) {
         my @h = @H;

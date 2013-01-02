@@ -1,10 +1,11 @@
-BEGIN { push @*INC, 'lib' }
+BEGIN { unshift @*INC, 'lib' }
 use Test;
 use Digest::SHA;
 
 plan 2;
 
-my $test-buf = "foo bar".encode: 'ascii';
+my $test-str = "foo bar";
+my $test-buf = $test-str.encode: 'ascii';
 my $sha1 = [~] .list».fmt: "%02x" given sha1 $test-buf;
 my $sha256 = [~] .list».fmt: "%02x" given sha256 $test-buf;
 

@@ -1,4 +1,4 @@
-BEGIN { push @*INC, <lib> }
+BEGIN { unshift @*INC, <lib> }
 
 use Test;
 use Digest;
