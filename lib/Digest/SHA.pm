@@ -15,6 +15,8 @@ http:#code.google.com/p/crypto-js/wiki/License
 It was heavily modified, though.
 =end Credits
 
+my \primes = grep &is-prime, 2 .. *;
+
 sub postfix:<mod2³²>(\x) { x % 2**32 }
 sub infix:<⊕>(\x,\y)     { (x + y)mod2³² }
 sub S(\n,\X)             { (X +< n)mod2³² +| (X +> (32-n)) }
@@ -60,7 +62,6 @@ multi sha1(Buf $msg) {
     }
 }
 
-constant primes = grep &is-prime, 2 .. *;
 sub init(&f) { map { (($_ - .Int)*2**32).Int }, map &f, primes }
 
 sub rotr($n, $b) { $n +> $b +| $n +< (32 - $b) }
@@ -68,7 +69,7 @@ sub rotr($n, $b) { $n +> $b +| $n +< (32 - $b) }
 proto sha256($) returns Buf is export {*}
 multi sha256(Str $str where all($str.ords) < 128 ) { sha256 $str.encode: 'ascii' }
 multi sha256(Buf $data) {
-    my \K = init(* **(1/3))[^64];
+    my $K = init(* **(1/3))[^64];
     my $l = 8 * my @b = $data.list;
     push @b, 0x80; push @b, 0 until (8*@b-448) %% 512;
  
@@ -92,7 +93,7 @@ multi sha256(Buf $data) {
             my $maj = @h[0] +& @h[2] +^ @h[0] +& @h[1] +^ @h[1] +& @h[2];
             my $σ0 = [+^] map { rotr @h[0], $_ }, 2, 13, 22;
             my $σ1 = [+^] map { rotr @h[4], $_ }, 6, 11, 25;
-            my $t1 = [⊕] @h[7], $σ1, $ch, K[$j], @w[$j];
+            my $t1 = [⊕] @h[7], $σ1, $ch, $K[$j], @w[$j];
             my $t2 = $σ0 ⊕ $maj;
             @h = $t1 ⊕ $t2, @h[^3], @h[3] ⊕ $t1, @h[4..6];
         }
