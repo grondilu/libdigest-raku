@@ -1,4 +1,4 @@
-This is a perl6 module implementing some digest algorithms in pure Perl6 (no rakudo code).
+This is a perl6 module implementing some digest algorithms in pure Perl6 (no parrot or nqp:: code).
 
 The interface is minimal: functions only return Buf and only take a Buf as
 argument.  It's up to the user to turn it into an hex string if he needs to.
