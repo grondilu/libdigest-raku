@@ -28,7 +28,7 @@ my \f = -> \B,\C,\D { (B +& C) +| ((+^B)mod2³² +& D)   },
  
 my \K = 0x5A827999, 0x6ED9EBA1, 0x8F1BBCDC, 0xCA62C1D6;
  
-sub sha1-pad(Buf $msg)
+sub sha1-pad(Blob $msg)
 {
     my \bits = 8 * $msg.elems;
     my @padded = $msg.list, 0x80, 0x00 xx (-(bits div 8 + 1 + 8) % 64);
@@ -48,13 +48,13 @@ sub sha1-block(@H is rw, @M)
     @H «⊕=» ($A,$B,$C,$D,$E);
 }
  
-proto sha1($) returns Buf is export {*}
+proto sha1($) returns Blob is export {*}
 multi sha1(Str $str where all($str.ords) < 128 ) { sha1 $str.encode: 'ascii' }
-multi sha1(Buf $msg) {
+multi sha1(Blob $msg) {
     my @M = sha1-pad($msg);
     my @H = 0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0;
     sha1-block(@H,@M[$_..$_+15]) for 0,16...^+@M;
-    Buf.new: gather for @H {
+    Blob.new: gather for @H {
         my $h = $_;
         for 256 «**« reverse ^4 {
             take $h div $_; $h mod= $_;
@@ -66,9 +66,9 @@ sub init(&f) { map { (($_ - .Int)*2**32).Int }, map &f, primes }
 
 sub rotr($n, $b) { $n +> $b +| $n +< (32 - $b) }
  
-proto sha256($) returns Buf is export {*}
+proto sha256($) returns Blob is export {*}
 multi sha256(Str $str where all($str.ords) < 128 ) { sha256 $str.encode: 'ascii' }
-multi sha256(Buf $data) {
+multi sha256(Blob $data) {
     my $K = init(* **(1/3))[^64];
     my $l = 8 * my @b = $data.list;
     push @b, 0x80; push @b, 0 until (8*@b-448) %% 512;
@@ -99,7 +99,7 @@ multi sha256(Buf $data) {
         }
         @H = @H Z⊕ @h;
     }
-    return Buf.new: map -> $word is rw {
+    return Blob.new: map -> $word is rw {
         reverse gather for ^4 { take $word % 256; $word div= 256 }
     }, @H;
 }

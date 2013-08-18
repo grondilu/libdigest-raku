@@ -23,7 +23,7 @@ my \k = (   $_           for ^16),
  
 sub little-endian($w, $n, *@v) { (@v X+> ($w X* ^$n)) X% (2 ** $w) }
  
-sub md5-pad(Buf $msg)
+sub md5-pad(Blob $msg)
 {
     my \bits = 8 * $msg.elems;
     my @padded = $msg.list, 0x80, 0x00 xx (-(bits div 8 + 1 + 8) % 64);
@@ -41,13 +41,13 @@ sub md5-block(@H is rw, @X)
     @H «⊞=» ($A, $B, $C, $D);
 }
  
-proto md5($msg) returns Buf is export {*}
+proto md5($msg) returns Blob is export {*}
 multi md5($msg where all($msg.ords) < 128) { md5 $msg.encode: 'ascii' }
-multi md5(Buf $msg) {
+multi md5(Blob $msg) {
     my @M = md5-pad($msg);
     my @H = 0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476;
     md5-block(@H, @M[$_ .. $_+15]) for 0, 16 ...^ +@M;
-    Buf.new: little-endian(8, 4, @H);
+    Blob.new: little-endian(8, 4, @H);
 }
  
 # vim: ft=perl6

@@ -48,9 +48,9 @@ my \F =
 my \K1 = <0x00000000 0x5a827999 0x6ed9eba1 0x8f1bbcdc 0xa953fd4e> »xx» 16;
 my \K2 = <0x50a28be6 0x5c4dd124 0x6d703ef3 0x7a6d76e9 0x00000000> »xx» 16;
  
-proto rmd160($) returns Buf is export {*}
+proto rmd160($) returns Blob is export {*}
 multi rmd160(Str $str where all($str.ords) < 128) { rmd160 $str.encode: 'ascii' }
-multi rmd160(Buf $data) {
+multi rmd160(Blob $data) {
     my @b = $data.list, 0x80;
     push @b, 0 until (8*@b-448) %% 512;
     my $len = 8 * $data.elems;
@@ -75,9 +75,9 @@ multi rmd160(Buf $data) {
 	    ) m+ @Y[4];
 	    @Y = @Y[4], $T, @Y[1], rotl(@Y[2], 10) % 2**32, @Y[3];
 	}
-	@h = @h[1..4,^1] Z[m+] @X[2..4,^2] Z[m+] @Y[3..4,^3];
+	@h = @h[1..4,^1] Zm+ @X[2..4,^2] Zm+ @Y[3..4,^3];
     }
-    return Buf.new: gather for @h -> $word is rw {
+    return Blob.new: gather for @h -> $word is rw {
         for ^4 { take $word % 256; $word div= 256 }
     }
 }
