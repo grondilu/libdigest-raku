@@ -45,8 +45,8 @@ my \F =
     { ($^x +& $^z) +| ($^y +& m^$^z) },
     * +^ (* +| m^*),
 ;
-my \K1 = <0x00000000 0x5a827999 0x6ed9eba1 0x8f1bbcdc 0xa953fd4e> »xx» 16;
-my \K2 = <0x50a28be6 0x5c4dd124 0x6d703ef3 0x7a6d76e9 0x00000000> »xx» 16;
+my \K1 = (<0x00000000 0x5a827999 0x6ed9eba1 0x8f1bbcdc 0xa953fd4e> »xx» 16).flat;
+my \K2 = (<0x50a28be6 0x5c4dd124 0x6d703ef3 0x7a6d76e9 0x00000000> »xx» 16).flat;
  
 proto rmd160($) returns Blob is export {*}
 multi rmd160(Str $str where all($str.ords) < 128) { rmd160 $str.encode: 'ascii' }
