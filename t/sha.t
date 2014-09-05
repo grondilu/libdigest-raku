@@ -1,4 +1,3 @@
-BEGIN { unshift @*INC, 'lib' }
 use Test;
 use Digest::SHA;
 

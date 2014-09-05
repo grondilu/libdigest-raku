@@ -1,5 +1,3 @@
-BEGIN { push @*INC, 'lib' }
-
 use Test;
 use Digest::RIPEMD;
 
