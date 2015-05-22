@@ -1,4 +1,4 @@
-module Digest::SHA;
+unit module Digest::SHA;
 
 =begin Credits
 The code for SHA-1 comes from Rosetta code:

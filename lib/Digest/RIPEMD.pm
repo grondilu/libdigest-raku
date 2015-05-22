@@ -1,4 +1,4 @@
-module Digest::RIPEMD;
+unit module Digest::RIPEMD;
 
 =begin CREDITS
 Crypto-JS v2.0.0

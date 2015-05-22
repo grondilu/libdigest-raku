@@ -1,4 +1,4 @@
-module Digest;
+unit module Digest;
 
 sub prefix:<¬>(\x)       {   (+^ x) % 2**32 }
 sub infix:<⊞>(\x, \y)    {  (x + y) % 2**32 }
