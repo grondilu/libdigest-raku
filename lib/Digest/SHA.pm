@@ -15,7 +15,7 @@ http:#code.google.com/p/crypto-js/wiki/License
 It was heavily modified, though.
 =end Credits
 
-my \primes = grep &is-prime, 2 .. *;
+my \primes = grep *.is-prime, 2 .. *;
 
 sub postfix:<mod2³²>(\x) { x % 2**32 }
 sub infix:<⊕>(\x,\y)     { (x + y)mod2³² }
@@ -80,6 +80,7 @@ multi sha256(Blob $data) {
  
     my @H = init(&sqrt)[^8];
     my @w;
+
     loop (my $i = 0; $i < @word.elems; $i += 16) {
         my @h = @H;
         for ^64 -> $j {
