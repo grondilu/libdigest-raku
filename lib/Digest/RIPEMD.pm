@@ -45,13 +45,13 @@ my \F =
     { ($^x +& $^z) +| ($^y +& m^$^z) },
     * +^ (* +| m^*),
 ;
-my \K1 = (<0x00000000 0x5a827999 0x6ed9eba1 0x8f1bbcdc 0xa953fd4e> »xx» 16).flat;
-my \K2 = (<0x50a28be6 0x5c4dd124 0x6d703ef3 0x7a6d76e9 0x00000000> »xx» 16).flat;
- 
+my \K1 = ((0x00000000, 0x5a827999, 0x6ed9eba1, 0x8f1bbcdc, 0xa953fd4e) »xx» 16).map: *.Slip;
+my \K2 = ((0x50a28be6, 0x5c4dd124, 0x6d703ef3, 0x7a6d76e9, 0x00000000) »xx» 16).map: *.Slip;
+
 proto rmd160($) returns Blob is export {*}
 multi rmd160(Str $str where all($str.ords) < 128) { rmd160 $str.encode: 'ascii' }
 multi rmd160(Blob $data) {
-    my @b = $data.list, 0x80;
+    my @b = flat $data.list, 0x80;
     push @b, 0 until (8*@b-448) %% 512;
     my $len = 8 * $data.elems;
     push @b, gather for ^8 { take $len % 256; $len div= 256 }
@@ -68,16 +68,16 @@ multi rmd160(Blob $data) {
 		@X[0] m+ F[$j div 16](|@X[1..3]) m+ (@word[$i+r1[$j]] // 0) m+ K1[$j],
 		s1[$j]
 	    ) m+ @X[4];
-	    @X = @X[4], $T, @X[1], rotl(@X[2], 10) % 2**32, @X[3];
+	    @X = flat @X[4], $T, @X[1], rotl(@X[2], 10) % 2**32, @X[3];
 	    $T = rotl(
 		@Y[0] m+ F[(79-$j) div 16](|@Y[1..3]) m+ (@word[$i+r2[$j]] // 0) m+ K2[$j],
 		s2[$j]
 	    ) m+ @Y[4];
-	    @Y = @Y[4], $T, @Y[1], rotl(@Y[2], 10) % 2**32, @Y[3];
+	    @Y = flat @Y[4], $T, @Y[1], rotl(@Y[2], 10) % 2**32, @Y[3];
 	}
-	@h = @h[1..4,^1] Zm+ @X[2..4,^2] Zm+ @Y[3..4,^3];
+        @h = @h[1,2,3,4,0] Zm+ @X[2,3,4,0,1] Zm+ @Y[3,4,0,1,2];
     }
-    return Blob.new: gather for @h -> $word is rw {
+    return Blob.new: flat gather for @h -> $word is rw {
         for ^4 { take $word % 256; $word div= 256 }
     }
 }

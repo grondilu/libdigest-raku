@@ -21,13 +21,13 @@ my \k = ((   $_           for ^16),
              ((3*$_ + 5) % 16 for ^16),
              ((7*$_    ) % 16 for ^16)).flat;
  
-sub little-endian($w, $n, *@v) { (@v X+> ($w X* ^$n)) X% (2 ** $w) }
+sub little-endian($w, $n, *@v) { (@v X+> flat ($w X* ^$n)) X% (2 ** $w) }
  
 sub md5-pad(Blob $msg)
 {
     my \bits = 8 * $msg.elems;
-    my @padded = $msg.list, 0x80, 0x00 xx (-(bits div 8 + 1 + 8) % 64);
-    @padded.map({ :256[$^d,$^c,$^b,$^a] }), little-endian(32, 2, bits);
+    my @padded = flat $msg.list, 0x80, 0x00 xx (-(bits div 8 + 1 + 8) % 64);
+    flat @padded.map({ :256[$^d,$^c,$^b,$^a] }), little-endian(32, 2, bits);
 }
  
 sub md5-block(@H is rw, @X)

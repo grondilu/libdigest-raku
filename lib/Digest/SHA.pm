@@ -15,7 +15,7 @@ http:#code.google.com/p/crypto-js/wiki/License
 It was heavily modified, though.
 =end Credits
 
-my \primes = grep *.is-prime, 2 .. *;
+my \primes = grep(*.is-prime, 2 .. *).list;
 
 sub postfix:<mod2³²>(\x) { x % 2**32 }
 sub infix:<⊕>(\x,\y)     { (x + y)mod2³² }
@@ -31,8 +31,8 @@ my \K = 0x5A827999, 0x6ED9EBA1, 0x8F1BBCDC, 0xCA62C1D6;
 sub sha1-pad(Blob $msg)
 {
     my \bits = 8 * $msg.elems;
-    my @padded = $msg.list, 0x80, 0x00 xx (-(bits div 8 + 1 + 8) % 64);
-    @padded.map({ :256[$^a,$^b,$^c,$^d] }), (bits +> 32)mod2³², (bits)mod2³²;
+    my @padded = flat $msg.list, 0x80, 0x00 xx (-(bits div 8 + 1 + 8) % 64);
+    flat @padded.map({ :256[$^a,$^b,$^c,$^d] }), (bits +> 32)mod2³², (bits)mod2³²;
 }
  
 sub sha1-block(@H is rw, @M)
@@ -96,11 +96,11 @@ multi sha256(Blob $data) {
             my $σ1 = [+^] map { rotr @h[4], $_ }, 6, 11, 25;
             my $t1 = [⊕] @h[7], $σ1, $ch, $K[$j], @w[$j];
             my $t2 = $σ0 ⊕ $maj;
-            @h = $t1 ⊕ $t2, @h[^3], @h[3] ⊕ $t1, @h[4..6];
+            @h = flat $t1 ⊕ $t2, @h[^3], @h[3] ⊕ $t1, @h[4..6];
         }
         @H = @H Z⊕ @h;
     }
-    return Blob.new: map -> $word is rw {
+    return Blob.new: flat map -> $word is rw {
         reverse gather for ^4 { take $word % 256; $word div= 256 }
     }, @H;
 }
