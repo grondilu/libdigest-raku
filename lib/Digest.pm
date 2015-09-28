@@ -30,7 +30,7 @@ sub md5-pad(Blob $msg)
     flat @padded.map({ :256[$^d,$^c,$^b,$^a] }), little-endian(32, 2, bits);
 }
  
-sub md5-block(@H is rw, @X)
+sub md5-block(@H, @X)
 {
     my ($A, $B, $C, $D) = @H;
     for ^64 -> \i {

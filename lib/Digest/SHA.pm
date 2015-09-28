@@ -35,7 +35,7 @@ sub sha1-pad(Blob $msg)
     flat @padded.map({ :256[$^a,$^b,$^c,$^d] }), (bits +> 32)mod2³², (bits)mod2³²;
 }
  
-sub sha1-block(@H is rw, @M)
+sub sha1-block(@H, @M)
 {
     my @W = @M;
     @W.push: S(1, @W[$_-3] +^ @W[$_-8] +^ @W[$_-14] +^ @W[$_-16]) for 16..79;
