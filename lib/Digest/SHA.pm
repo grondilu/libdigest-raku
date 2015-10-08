@@ -73,7 +73,7 @@ multi sha256(Blob $data) {
     my $l = 8 * my @b = $data.list;
     push @b, 0x80; push @b, 0 until (8*@b-448) %% 512;
  
-    push @b, reverse gather for ^8 { take $l%256; $l div=256 }
+    push @b, |reverse gather for ^8 { take $l%256; $l div=256 }
     my @word = gather for @b -> $a, $b, $c, $d {
         take reduce * *256 + *, $a, $b, $c, $d;
     }
