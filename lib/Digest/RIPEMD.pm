@@ -54,7 +54,7 @@ multi rmd160(Blob $data) {
     my @b = flat $data.list, 0x80;
     push @b, 0 until (8*@b-448) %% 512;
     my $len = 8 * $data.elems;
-    push @b, gather for ^8 { take $len % 256; $len div= 256 }
+    push @b, |gather for ^8 { take $len % 256; $len div= 256 }
  
     my @word = gather for @b -> $a, $b, $c, $d {
         take reduce * *256 + *, $d, $c, $b, $a;
