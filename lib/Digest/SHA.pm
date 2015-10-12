@@ -35,7 +35,7 @@ sub sha1-pad(Blob $msg)
     flat @padded.map({ :256[$^a,$^b,$^c,$^d] }), (bits +> 32)mod2³², (bits)mod2³²;
 }
  
-sub sha1-block(@H is rw, @M)
+sub sha1-block(@H, @M)
 {
     my @W = @M;
     @W.push: S(1, @W[$_-3] +^ @W[$_-8] +^ @W[$_-14] +^ @W[$_-16]) for 16..79;
@@ -73,7 +73,7 @@ multi sha256(Blob $data) {
     my $l = 8 * my @b = $data.list;
     push @b, 0x80; push @b, 0 until (8*@b-448) %% 512;
  
-    push @b, reverse gather for ^8 { take $l%256; $l div=256 }
+    push @b, |reverse gather for ^8 { take $l%256; $l div=256 }
     my @word = gather for @b -> $a, $b, $c, $d {
         take reduce * *256 + *, $a, $b, $c, $d;
     }
