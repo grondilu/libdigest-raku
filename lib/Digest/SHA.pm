@@ -64,39 +64,51 @@ multi sha1(Blob $msg) {
 
 sub init(&f) { map { (($_ - .Int)*2**32).Int }, map &f, primes }
 
-sub rotr($n, $b) { $n +> $b +| $n +< (32 - $b) }
+sub rotr(uint32 $n, uint32 $b) { $n +> $b +| $n +< (32 - $b) }
  
 proto sha256($) returns Blob is export {*}
 multi sha256(Str $str where all($str.ords) < 128 ) { sha256 $str.encode: 'ascii' }
+my $K = init(* **(1/3))[^64];
 multi sha256(Blob $data) {
-    my $K = init(* **(1/3))[^64];
+    # The message is padded with a single 1 bit, and then zero bits until the
+    # length (in bits) is 448 mod 512.
     my $l = 8 * my @b = $data.list;
     push @b, 0x80; push @b, 0 until (8*@b-448) %% 512;
- 
-    push @b, |reverse gather for ^8 { take $l%256; $l div=256 }
-    my @word = gather for @b -> $a, $b, $c, $d {
-        take reduce * *256 + *, $a, $b, $c, $d;
+    @b.push: $l +& 0xff_00_00_00_00_00_00_00 +> 56,
+             $l +& 0x00_ff_00_00_00_00_00_00 +> 48,
+             $l +& 0x00_00_ff_00_00_00_00_00 +> 40,
+             $l +& 0x00_00_00_ff_00_00_00_00 +> 32,
+             $l +& 0x00_00_00_00_ff_00_00_00 +> 24,
+             $l +& 0x00_00_00_00_00_ff_00_00 +> 16,
+             $l +& 0x00_00_00_00_00_00_ff_00 +> 8,
+             $l +& 0x00_00_00_00_00_00_00_ff;
+
+    # The padding is rounded out with the length of the message (excluding the
+    # padding we've already added) encoded as a 64 bit int in MSB byte order.
+    my @word;
+    loop (my $i = 0; 4*$i < @b.elems; $i = $i + 1) {
+        @word[$i] = @b[4*$i] +< 24 +| @b[4*$i+1] +< 16 +| @b[4*$i+2] +< 8 +| @b[4*$i+3];
     }
  
     my @H = init(&sqrt)[^8];
     my @w;
 
-    loop (my $i = 0; $i < @word.elems; $i += 16) {
+    loop ($i = 0; $i < @word.elems; $i = $i + 16) {
         my @h = @H;
-        for ^64 -> $j {
-            @w[$j] = $j < 16 ?? @word[$j + $i] // 0 !!
-            [⊕]
-            rotr(@w[$j-15], 7) +^ rotr(@w[$j-15], 18) +^ @w[$j-15] +> 3,
-            @w[$j-7],
-            rotr(@w[$j-2], 17) +^ rotr(@w[$j-2], 19)  +^ @w[$j-2] +> 10,
-            @w[$j-16];
-            my $ch = @h[4] +& @h[5] +^ +^@h[4] % 2**32 +& @h[6];
-            my $maj = @h[0] +& @h[2] +^ @h[0] +& @h[1] +^ @h[1] +& @h[2];
-            my $σ0 = [+^] map { rotr @h[0], $_ }, 2, 13, 22;
-            my $σ1 = [+^] map { rotr @h[4], $_ }, 6, 11, 25;
-            my $t1 = [⊕] @h[7], $σ1, $ch, $K[$j], @w[$j];
+        loop (my $j = 0; $j < 64; $j = $j + 1) {
+            @w.AT-POS($j) = $j < 16 ?? @word.AT-POS($j + $i) // 0 !!
+                (rotr(@w.AT-POS($j-15), 7) +^ rotr(@w.AT-POS($j-15), 18) +^ @w.AT-POS($j-15) +> 3) ⊕
+                @w.AT-POS($j-7) ⊕
+                (rotr(@w.AT-POS($j-2), 17) +^ rotr(@w.AT-POS($j-2), 19)  +^ @w.AT-POS($j-2) +> 10) ⊕
+                @w.AT-POS($j-16);
+            my $ch = @h.AT-POS(4) +& @h.AT-POS(5) +^ +^@h.AT-POS(4) % 2**32 +& @h.AT-POS(6);
+            my $maj = @h.AT-POS(0) +& @h.AT-POS(2) +^ @h.AT-POS(0) +& @h.AT-POS(1) +^ @h.AT-POS(1) +& @h.AT-POS(2);
+            my $σ0 = rotr(@h.AT-POS(0), 2) +^ rotr(@h.AT-POS(0), 13) +^ rotr(@h.AT-POS(0), 22);
+            my $σ1 = rotr(@h.AT-POS(4), 6) +^ rotr(@h.AT-POS(4), 11) +^ rotr(@h.AT-POS(4), 25);
+            my $t1 = @h.AT-POS(7) ⊕ $σ1 ⊕ $ch ⊕ $K.AT-POS($j) ⊕ @w.AT-POS($j);
             my $t2 = $σ0 ⊕ $maj;
-            @h = flat $t1 ⊕ $t2, @h[^3], @h[3] ⊕ $t1, @h[4..6];
+            @h = $t1 ⊕ $t2, @h.AT-POS(0), @h.AT-POS(1), @h.AT-POS(2),
+                @h.AT-POS(3) ⊕ $t1, @h.AT-POS(4), @h.AT-POS(5), @h.AT-POS(6);
         }
         @H = @H Z⊕ @h;
     }
