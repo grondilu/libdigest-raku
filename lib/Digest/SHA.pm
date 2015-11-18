@@ -85,9 +85,9 @@ multi sha256(Blob $data) {
     my @H = init(&sqrt)[^8];
     my @w;
 
-    loop (my $i = 0; $i < @word.elems; $i = $i + 16) {
+    loop (my int $i = 0; $i < @word.elems; $i = $i + 16) {
         my @h = @H;
-        loop (my $j = 0; $j < 64; $j = $j + 1) {
+        loop (my int $j = 0; $j < 64; $j = $j + 1) {
             @w.AT-POS($j) = $j < 16 ?? @word.AT-POS($j + $i) // 0 !!
                 (rotr(@w.AT-POS($j-15), 7) +^ rotr(@w.AT-POS($j-15), 18) +^ @w.AT-POS($j-15) +> 3) ⊕
                 @w.AT-POS($j-7) ⊕
@@ -104,9 +104,7 @@ multi sha256(Blob $data) {
         }
         @H = @H Z⊕ @h;
     }
-    return Blob.new: flat map -> $word is rw {
-        reverse gather for ^4 { take $word % 256; $word div= 256 }
-    }, @H;
+    return Blob.new: flat @H.map: *.polymod(256 xx 3).reverse;
 }
 
 # vim: ft=perl6
