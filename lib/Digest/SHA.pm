@@ -70,30 +70,22 @@ proto sha256($) returns Blob is export {*}
 multi sha256(Str $str where all($str.ords) < 128 ) { sha256 $str.encode: 'ascii' }
 my $K = init(* **(1/3))[^64];
 multi sha256(Blob $data) {
+    my $l = 8 * my @b = $data.list;
     # The message is padded with a single 1 bit, and then zero bits until the
     # length (in bits) is 448 mod 512.
-    my $l = 8 * my @b = $data.list;
-    push @b, 0x80; push @b, 0 until (8*@b-448) %% 512;
-    @b.push: $l +& 0xff_00_00_00_00_00_00_00 +> 56,
-             $l +& 0x00_ff_00_00_00_00_00_00 +> 48,
-             $l +& 0x00_00_ff_00_00_00_00_00 +> 40,
-             $l +& 0x00_00_00_ff_00_00_00_00 +> 32,
-             $l +& 0x00_00_00_00_ff_00_00_00 +> 24,
-             $l +& 0x00_00_00_00_00_ff_00_00 +> 16,
-             $l +& 0x00_00_00_00_00_00_ff_00 +> 8,
-             $l +& 0x00_00_00_00_00_00_00_ff;
+    push @b, 0x80;
+    push @b, 0 until (8*@b-448) %% 512;
 
-    # The padding is rounded out with the length of the message (excluding the
-    # padding we've already added) encoded as a 64 bit int in MSB byte order.
-    my @word;
-    loop (my $i = 0; 4*$i < @b.elems; $i = $i + 1) {
-        @word[$i] = @b[4*$i] +< 24 +| @b[4*$i+1] +< 16 +| @b[4*$i+2] +< 8 +| @b[4*$i+3];
-    }
- 
+    # The length of the message is pushed, with an eight bytes encoding
+    push @b, |$l.polymod(256 xx 7).reverse;
+
+    # the message is turned into a list of eight-bytes words
+    my @word = @b.rotor(4).map: { :256[@$_] }
+
     my @H = init(&sqrt)[^8];
     my @w;
 
-    loop ($i = 0; $i < @word.elems; $i = $i + 16) {
+    loop (my $i = 0; $i < @word.elems; $i = $i + 16) {
         my @h = @H;
         loop (my $j = 0; $j < 64; $j = $j + 1) {
             @w.AT-POS($j) = $j < 16 ?? @word.AT-POS($j + $i) // 0 !!
