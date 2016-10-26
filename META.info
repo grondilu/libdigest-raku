@@ -1,4 +1,5 @@
 {
+     "perl" : "6.*",
      "name" : "Digest",
      "version" : "0.3.4",
      "description" : "Pure perl6 implementation of digest algorigthms.",
