@@ -22,6 +22,8 @@ Currently implemented:
 * Digest::RIPEMD :
   - rmd160
 
+PERFORMANCE WARNING: currently, execution is much slower than with most other programming languages.
+
 This work is published under the terms of the artistic license, as rakudo is.
 See LICENSE file.
 
