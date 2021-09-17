@@ -1,3 +1,4 @@
+#!/usr/bin/env raku
 unit module Digest::SHA;
 
 =begin Credits
@@ -28,7 +29,7 @@ my \f = -> \B,\C,\D { (B +& C) +| ((+^B)mod2³² +& D)   },
  
 my \K = 0x5A827999, 0x6ED9EBA1, 0x8F1BBCDC, 0xCA62C1D6;
  
-sub sha1-pad(Blob $msg)
+sub sha1-pad(blob8 $msg)
 {
     my \bits = 8 * $msg.elems;
     my @padded = flat $msg.list, 0x80, 0x00 xx (-(bits div 8 + 1 + 8) % 64);
@@ -48,13 +49,13 @@ sub sha1-block(@H, @M)
     @H «⊕=» ($A,$B,$C,$D,$E);
 }
  
-proto sha1($) returns Blob is export {*}
+proto sha1($) returns blob8 is export {*}
 multi sha1(Str $str where all($str.ords) < 128 ) { sha1 $str.encode: 'ascii' }
-multi sha1(Blob $msg) {
+multi sha1(blob8 $msg) {
     my @M = sha1-pad($msg);
     my @H = 0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0;
     sha1-block(@H,@M[$_..$_+15]) for 0,16...^+@M;
-    Blob.new: gather for @H {
+    blob8.new: gather for @H {
         my $h = $_;
         for 256 «**« reverse ^4 {
             take $h div $_; $h mod= $_;
@@ -66,10 +67,10 @@ sub init(&f) { map { (($_ - .Int)*2**32).Int }, map &f, primes }
 
 sub rotr(uint32 $n, uint32 $b) { $n +> $b +| $n +< (32 - $b) }
  
-proto sha256($) returns Blob is export {*}
+proto sha256($) returns blob8 is export {*}
 multi sha256(Str $str where all($str.ords) < 128 ) { sha256 $str.encode: 'ascii' }
 my $K = init(* **(1/3))[^64];
-multi sha256(Blob $data) {
+multi sha256(blob8 $data) {
     my $l = 8 * my @b = $data.list;
     # The message is padded with a single 1 bit, and then zero bits until the
     # length (in bits) is 448 mod 512.
@@ -85,26 +86,26 @@ multi sha256(Blob $data) {
     my @H = init(&sqrt)[^8];
     my @w;
 
-    loop (my int $i = 0; $i < @word.elems; $i = $i + 16) {
+    loop (my int $i = 0; $i < @word; $i += 16) {
         my @h = @H;
-        loop (my int $j = 0; $j < 64; $j = $j + 1) {
-            @w.AT-POS($j) = $j < 16 ?? @word.AT-POS($j + $i) // 0 !!
-                (rotr(@w.AT-POS($j-15), 7) +^ rotr(@w.AT-POS($j-15), 18) +^ @w.AT-POS($j-15) +> 3) ⊕
-                @w.AT-POS($j-7) ⊕
-                (rotr(@w.AT-POS($j-2), 17) +^ rotr(@w.AT-POS($j-2), 19)  +^ @w.AT-POS($j-2) +> 10) ⊕
-                @w.AT-POS($j-16);
-            my $ch = @h.AT-POS(4) +& @h.AT-POS(5) +^ +^@h.AT-POS(4) % 2**32 +& @h.AT-POS(6);
-            my $maj = @h.AT-POS(0) +& @h.AT-POS(2) +^ @h.AT-POS(0) +& @h.AT-POS(1) +^ @h.AT-POS(1) +& @h.AT-POS(2);
-            my $σ0 = rotr(@h.AT-POS(0), 2) +^ rotr(@h.AT-POS(0), 13) +^ rotr(@h.AT-POS(0), 22);
-            my $σ1 = rotr(@h.AT-POS(4), 6) +^ rotr(@h.AT-POS(4), 11) +^ rotr(@h.AT-POS(4), 25);
-            my $t1 = @h.AT-POS(7) ⊕ $σ1 ⊕ $ch ⊕ $K.AT-POS($j) ⊕ @w.AT-POS($j);
+        loop (my int $j = 0; $j < 64; $j += 1) {
+            @w[$j] = $j < 16 ?? @word[$j + $i] // 0 !!
+                (rotr(@w[$j-15], 7) +^ rotr(@w[$j-15], 18) +^ @w[$j-15] +> 3) ⊕
+                @w[$j-7] ⊕
+                (rotr(@w[$j-2], 17) +^ rotr(@w[$j-2], 19)  +^ @w[$j-2] +> 10) ⊕
+                @w[$j-16];
+            my $ch = @h[4] +& @h[5] +^ +^@h[4] % 2**32 +& @h[6];
+            my $maj = @h[0] +& @h[2] +^ @h[0] +& @h[1] +^ @h[1] +& @h[2];
+            my $σ0 = rotr(@h[0], 2) +^ rotr(@h[0], 13) +^ rotr(@h[0], 22);
+            my $σ1 = rotr(@h[4], 6) +^ rotr(@h[4], 11) +^ rotr(@h[4], 25);
+            my $t1 = @h[7] ⊕ $σ1 ⊕ $ch ⊕ $K[$j] ⊕ @w[$j];
             my $t2 = $σ0 ⊕ $maj;
-            @h = $t1 ⊕ $t2, @h.AT-POS(0), @h.AT-POS(1), @h.AT-POS(2),
-                @h.AT-POS(3) ⊕ $t1, @h.AT-POS(4), @h.AT-POS(5), @h.AT-POS(6);
+            @h = $t1 ⊕ $t2, @h[0], @h[1], @h[2],
+                @h[3] ⊕ $t1, @h[4], @h[5], @h[6];
         }
-        @H = @H Z⊕ @h;
+        @H [Z⊕]= @h;
     }
-    return Blob.new: flat @H.map: *.polymod(256 xx 3).reverse;
+    return blob8.new: flat @H.map: *.polymod(256 xx 3).reverse;
 }
 
-# vim: ft=perl6
+# vim: ft=raku
