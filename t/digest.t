@@ -1,12 +1,12 @@
 use Test;
 use Digest;
 
-plan 3;
+plan 10;
 
 is md5(''.encode: 'ascii').list».fmt("%02x").join, 'd41d8cd98f00b204e9800998ecf8427e', "empty string";
 is md5('a'.encode: 'ascii').list».fmt("%02x").join, '0cc175b9c0f1b6a831c399e269772661', "a";
 is md5('abc'.encode: 'ascii').list».fmt("%02x").join, '900150983cd24fb0d6963f7d28e17f72', "abc";
-=END
+
 for 'd41d8cd98f00b204e9800998ecf8427e', '',
 '0cc175b9c0f1b6a831c399e269772661', 'a',
 '900150983cd24fb0d6963f7d28e17f72', 'abc',
@@ -19,4 +19,4 @@ for 'd41d8cd98f00b204e9800998ecf8427e', '',
     is $digest, $expected, "$digest is MD5 digest of '$msg'";
 }
 
-# vim: ft=perl6
+# vim: ft=raku

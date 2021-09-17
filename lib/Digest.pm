@@ -50,4 +50,4 @@ multi md5(Blob $msg) {
     Blob.new: little-endian(8, 4, @H);
 }
  
-# vim: ft=perl6
+# vim: ft=raku
