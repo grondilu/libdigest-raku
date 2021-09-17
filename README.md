@@ -1,6 +1,7 @@
 # Digests in pure raku
 
-This is a perl6 module implementing some digest algorithms in pure Perl6 (no parrot or nqp:: code).
+This is a [raku](https://raku.org/) module implementing some digest algorithms
+in pure raku (no parrot or nqp:: code).
 
 ## Synopsis
 
