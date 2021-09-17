@@ -57,7 +57,7 @@ multi rmd160(Blob $data) {
     push @b, |gather for ^8 { take $len % 256; $len div= 256 }
  
     my uint32 @word = gather for @b -> $a, $b, $c, $d {
-        take reduce * *256 + *, $d, $c, $b, $a;
+        take :256[$d, $c, $b, $a];
     }
  
     my uint32 @h = 0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476, 0xc3d2e1f0;
