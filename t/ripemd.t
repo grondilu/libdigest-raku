@@ -14,7 +14,7 @@ for (
   '1234567890' x 8 => '9b752e45573d4b39f4dbd3323cab82bf63326bfb'
   # 'a' x 1_000_000 => '52783243c1697bdbe16d37f97f68f08325dc1528'
 ) {
-  is rmd160(.key).list».fmt("%02x").join, .value;
+  is rmd160(.key).list».fmt("%02x").join, .value, .key;
 }
 
 # vim: ft=raku
