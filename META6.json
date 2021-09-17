@@ -2,14 +2,14 @@
      "perl" : "6.*",
      "name" : "Digest",
      "license" : "Artistic-2.0",
-     "version" : "0.3.4",
+     "version" : "0.4.0",
      "description" : "Pure perl6 implementation of digest algorigthms.",
      "author" : "Lucien Grondin",
      "depends" : [ ],
      "provides" : {
-         "Digest"    : "lib/Digest.pm",
-         "Digest::RIPEMD" : "lib/Digest/RIPEMD.pm",
-         "Digest::SHA"    : "lib/Digest/SHA.pm"
+         "Digest"    : "lib/Digest.rakumod",
+         "Digest::RIPEMD" : "lib/Digest/RIPEMD.rakumod",
+         "Digest::SHA"    : "lib/Digest/SHA.rakumod"
      },
-     "source-url" : "git://github.com/grondilu/libdigest-perl6.git"
+     "source-url" : "git://github.com/grondilu/libdigest-raku.git"
  }

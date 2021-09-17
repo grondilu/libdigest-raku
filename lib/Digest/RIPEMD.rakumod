@@ -5,10 +5,10 @@ Crypto-JS v2.0.0
 http:#code.google.com/p/crypto-js/
 Copyright (c) 2009, Jeff Mott. All rights reserved.
 =end CREDITS
+
+BEGIN say "compiling...";
  
-sub rotl($n, $b) { $n +< $b +| $n +> (32 - $b) }
-sub prefix:<m^> { +^$^x % 2**32 }
-sub infix:<m+> { ($^x + $^y) % 2**32 }
+sub rotl(uint32 $n, $b) { $n +< $b +| $n +> (32 - $b) }
  
 my \r1 = <
     0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
@@ -40,13 +40,13 @@ my \s2 = <
 >;
 my \F = 
     * +^ * +^ *,
-    { ($^x +& $^y) +| (m^$^x +& $^z) },
-    (* +| m^*) +^ *,
-    { ($^x +& $^z) +| ($^y +& m^$^z) },
-    * +^ (* +| m^*),
+    { ($^x +& $^y) +| (+^$^x +& $^z) },
+    (* +| +^*) +^ *,
+    { ($^x +& $^z) +| ($^y +& +^$^z) },
+    * +^ (* +| +^*),
 ;
-my @K1 = ((0x00000000, 0x5a827999, 0x6ed9eba1, 0x8f1bbcdc, 0xa953fd4e) »xx» 16).map: *.Slip;
-my @K2 = ((0x50a28be6, 0x5c4dd124, 0x6d703ef3, 0x7a6d76e9, 0x00000000) »xx» 16).map: *.Slip;
+my uint32 @K1 = ((0x00000000, 0x5a827999, 0x6ed9eba1, 0x8f1bbcdc, 0xa953fd4e) »xx» 16).map: *.Slip;
+my uint32 @K2 = ((0x50a28be6, 0x5c4dd124, 0x6d703ef3, 0x7a6d76e9, 0x00000000) »xx» 16).map: *.Slip;
 
 proto rmd160($) returns Blob is export {*}
 multi rmd160(Str $str where all($str.ords) < 128) { rmd160 $str.encode: 'ascii' }
@@ -56,26 +56,27 @@ multi rmd160(Blob $data) {
     my $len = 8 * $data.elems;
     push @b, |gather for ^8 { take $len % 256; $len div= 256 }
  
-    my @word = gather for @b -> $a, $b, $c, $d {
+    my uint32 @word = gather for @b -> $a, $b, $c, $d {
         take reduce * *256 + *, $d, $c, $b, $a;
     }
  
-    my @h = 0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476, 0xc3d2e1f0;
+    my uint32 @h = 0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476, 0xc3d2e1f0;
     loop (my $i = 0; $i < @word; $i += 16) {
-	my @X = my @Y = @h;
+	my uint32 @X = my uint32 @Y = @h;
 	for ^80 -> $j {
-	    my $T = rotl(
-		@X[0] m+ F[$j div 16](|@X[1..3]) m+ (@word[$i+r1[$j]] // 0) m+ @K1[$j],
+	    my uint32 $T = rotl(
+		@X[0] + F[$j div 16](|@X[1..3]) + (@word[$i+r1[$j]] // 0) + @K1[$j],
 		s1[$j]
-	    ) m+ @X[4];
-	    @X = flat @X[4], $T, @X[1], rotl(@X[2], 10) % 2**32, @X[3];
+	    ) + @X[4];
+	    my @T = @X[4], $T, @X[1], rotl(@X[2], 10), @X[3];
+	    @X = [@X[4], $T, @X[1], rotl(@X[2], 10), @X[3]];
 	    $T = rotl(
-		@Y[0] m+ F[(79-$j) div 16](|@Y[1..3]) m+ (@word[$i+r2[$j]] // 0) m+ @K2[$j],
+		@Y[0] + F[(79-$j) div 16](|@Y[1..3]) + (@word[$i+r2[$j]] // 0) + @K2[$j],
 		s2[$j]
-	    ) m+ @Y[4];
-	    @Y = flat @Y[4], $T, @Y[1], rotl(@Y[2], 10) % 2**32, @Y[3];
+	    ) + @Y[4];
+	    @Y = [@Y[4], $T, @Y[1], rotl(@Y[2], 10), @Y[3]];
 	}
-        @h = @h[1,2,3,4,0] Zm+ @X[2,3,4,0,1] Zm+ @Y[3,4,0,1,2];
+        @h = my uint32 @ = @h[1,2,3,4,0] Z+ @X[2,3,4,0,1] Z+ @Y[3,4,0,1,2];
     }
     return Blob.new: flat gather for @h -> $word is rw {
         for ^4 { take $word % 256; $word div= 256 }
