@@ -39,11 +39,11 @@ my \s2 = <
     8 5 12 9 12 5 14 6 8 13 6 5 15 13 11 11
 >;
 my \F = 
-    * +^ * +^ *,
-    { ($^x +& $^y) +| (+^$^x +& $^z) },
-    (* +| +^*) +^ *,
-    { ($^x +& $^z) +| ($^y +& +^$^z) },
-    * +^ (* +| +^*),
+    -> uint32 $x, uint32 $y, uint32 $z --> uint32 { (my uint32 $ = $x +^ $y) +^ $z },
+    -> uint32 $x, uint32 $y, uint32 $z --> uint32 { (my uint32 $ = ($x +& $y)) +| (my uint32 $ = (+^$x +& $z)) },
+    -> uint32 $x, uint32 $y, uint32 $z --> uint32 { (my uint32 $ = ($x +| +^$y)) +^ $z },
+    -> uint32 $x, uint32 $y, uint32 $z --> uint32 { (my uint32 $ = ($x +& $z)) +| (my uint32 $ = ($y +& +^$z)) },
+    -> uint32 $x, uint32 $y, uint32 $z --> uint32 { $x +^ my uint32 $ = ($y +| +^$z) },
 ;
 my uint32 @K1 = ((0x00000000, 0x5a827999, 0x6ed9eba1, 0x8f1bbcdc, 0xa953fd4e) »xx» 16).map: *.Slip;
 my uint32 @K2 = ((0x50a28be6, 0x5c4dd124, 0x6d703ef3, 0x7a6d76e9, 0x00000000) »xx» 16).map: *.Slip;
