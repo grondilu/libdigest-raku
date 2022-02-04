@@ -1,3 +1,4 @@
+#!/usr/bin/env raku
 use Test;
 use Digest;
 
