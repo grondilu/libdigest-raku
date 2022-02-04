@@ -44,10 +44,11 @@ my \F =
     -> uint32 $x, uint32 $y, uint32 $z --> uint32 { (my uint32 $ = ($x +& $y)) +| (my uint32 $ = (+^$x +& $z)) },
     -> uint32 $x, uint32 $y, uint32 $z --> uint32 { (my uint32 $ = ($x +| +^$y)) +^ $z },
     -> uint32 $x, uint32 $y, uint32 $z --> uint32 { (my uint32 $ = ($x +& $z)) +| (my uint32 $ = ($y +& +^$z)) },
-    -> uint32 $x, uint32 $y, uint32 $z --> uint32 { $x +^ my uint32 $ = ($y +| +^$z) },
+    -> uint32 $x, uint32 $y, uint32 $z --> uint32 { $x +^ my uint32 $ = ($y +| +^$z) }
 ;
-my uint32 @K1 = ((0x00000000, 0x5a827999, 0x6ed9eba1, 0x8f1bbcdc, 0xa953fd4e) »xx» 16).map: *.Slip;
-my uint32 @K2 = ((0x50a28be6, 0x5c4dd124, 0x6d703ef3, 0x7a6d76e9, 0x00000000) »xx» 16).map: *.Slip;
+
+constant @K1 = ((0x00000000, 0x5a827999, 0x6ed9eba1, 0x8f1bbcdc, 0xa953fd4e) »xx» 16).map: *.Slip;
+constant @K2 = ((0x50a28be6, 0x5c4dd124, 0x6d703ef3, 0x7a6d76e9, 0x00000000) »xx» 16).map: *.Slip;
 
 proto rmd160($) returns Blob is export {*}
 multi rmd160(Str $str where all($str.ords) < 128) { rmd160 $str.encode: 'ascii' }
