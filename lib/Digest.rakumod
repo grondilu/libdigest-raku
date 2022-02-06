@@ -1,7 +1,6 @@
 unit module Digest;
 
-sub prefix:<¬>(\x)       {   (+^ x) % 2**32 }
-sub infix:«<<<»(uint32 \x, \n)  { my uint32 $ = (x +< n) % 2**32 +| (x +> (32-n)) }
+sub infix:«<<<»(uint32 \x, \n) returns uint32 { my uint32 $ = (x +< n) +| (x +> (32-n)) }
  
 my \FGHI = sub (uint32 $x, uint32 $y, uint32 $z) { ($x +& $y) +| (+^$x +& $z) },
                 -> \X, \Y, \Z { my uint32 $ = (X +& Z) +| (Y +& +^Z) },
