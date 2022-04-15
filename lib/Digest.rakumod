@@ -1,5 +1,8 @@
 unit module Digest;
 
+subset HexStr of Str is export where /^<xdigit>*$/ ;
+sub blob-to-hex(Blob $b) returns HexStr is export { $b».fmt("%02x").join }
+
 sub infix:«<<<»(uint32 \x, \n) returns uint32 { my uint32 $ = (x +< n) +| (x +> (32-n)) }
  
 my \FGHI = sub (uint32 $x, uint32 $y, uint32 $z) { ($x +& $y) +| (+^$x +& $z) },
@@ -41,7 +44,7 @@ sub md5-block(uint32 @H, uint32 @X)
 }
  
 proto md5($msg) returns Blob is export {*}
-multi md5($msg where all($msg.ords) < 128) { md5 $msg.encode: 'ascii' }
+multi md5(Str $msg) { md5 $msg.encode }
 multi md5(Blob $msg) {
     my uint32 @M = md5-pad($msg);
     my uint32 @H = 0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476;
@@ -49,4 +52,4 @@ multi md5(Blob $msg) {
     Blob.new: little-endian(8, 4, @H);
 }
  
-# vim: ft=raku
+# vi: ft=raku

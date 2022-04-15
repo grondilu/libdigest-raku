@@ -6,7 +6,8 @@ http:#code.google.com/p/crypto-js/
 Copyright (c) 2009, Jeff Mott. All rights reserved.
 =end CREDITS
 
-BEGIN say "compiling...";
+proto rmd160($) returns Blob is export {*}
+multi rmd160(Str $str) { samewith $str.encode }
  
 sub rotl(uint32 $n, $b) { $n +< $b +| $n +> (32 - $b) }
  
@@ -50,8 +51,6 @@ my \F =
 constant @K1 = ((0x00000000, 0x5a827999, 0x6ed9eba1, 0x8f1bbcdc, 0xa953fd4e) »xx» 16).map: *.Slip;
 constant @K2 = ((0x50a28be6, 0x5c4dd124, 0x6d703ef3, 0x7a6d76e9, 0x00000000) »xx» 16).map: *.Slip;
 
-proto rmd160($) returns Blob is export {*}
-multi rmd160(Str $str where all($str.ords) < 128) { rmd160 $str.encode: 'ascii' }
 multi rmd160(Blob $data) {
     my @b = flat $data.list, 0x80;
     push @b, 0 until (8*@b-448) %% 512;

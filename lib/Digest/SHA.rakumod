@@ -16,6 +16,14 @@ http:#code.google.com/p/crypto-js/wiki/License
 It was heavily modified, though.
 =end Credits
 
+proto sha1($)   returns blob8 is export {*}
+proto sha256($) returns blob8 is export {*}
+proto sha512($) returns blob8 is export {*}
+
+multi sha1(Str $str)   { samewith $str.encode }
+multi sha256(Str $str) { samewith $str.encode }
+multi sha512(Str $str) { samewith $str.encode }
+
 my \primes = grep(*.is-prime, 2 .. *).list;
 
 sub postfix:<mod2³²>(\x) { x % 2**32 }
@@ -49,8 +57,6 @@ sub sha1-block(@H, @M)
     @H «⊕=» ($A,$B,$C,$D,$E);
 }
  
-proto sha1($) returns blob8 is export {*}
-multi sha1(Str $str where all($str.ords) < 128 ) { sha1 $str.encode: 'ascii' }
 multi sha1(blob8 $msg) {
     my @M = sha1-pad($msg);
     my @H = 0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0;
@@ -67,8 +73,6 @@ sub init(&f) { map { (($_ - .Int)*2**32).Int }, map &f, primes }
 
 sub rotr(uint32 $n, uint32 $b) { $n +> $b +| $n +< (32 - $b) }
  
-proto sha256($) returns blob8 is export {*}
-multi sha256(Str $str where all($str.ords) < 128 ) { sha256 $str.encode: 'ascii' }
 my $K = init(* **(1/3))[^64];
 multi sha256(blob8 $data) {
     my $l = 8 * my @b = $data.list;
@@ -106,6 +110,14 @@ multi sha256(blob8 $data) {
         @H [Z⊕]= @h;
     }
     return blob8.new: flat @H.map: *.polymod(256 xx 3).reverse;
+}
+
+multi sha512(blob8 $b) {
+  given run <openssl dgst -sha512 -binary>, :in, :out, :bin {
+    .in.write: $b;
+    .in.close;
+    return .out.slurp: :close;
+  }
 }
 
 # vim: ft=raku
