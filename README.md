@@ -1,4 +1,4 @@
-# Digests in pure raku
+# Digests in raku
 
 This is a [raku](https://raku.org/) module implementing some digest algorithms
 either in pure raku (no parrot or nqp:: code), or using a process call to
