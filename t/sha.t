@@ -3,7 +3,7 @@ use Test;
 use Digest;
 use Digest::SHA;
 
-plan 6;
+plan 9;
 
 # https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/SHA1.pdf
 # https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/SHA256.pdf
@@ -19,5 +19,9 @@ is blob-to-hex(sha256(.key)), .value, "SHA-256({.key})" for
 is blob-to-hex(sha512(.key)), .value, "SHA-512({.key})" for
   'abc' => 'ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f',
   'abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu' => '8e959b75dae313da8cf4f72814fc143f8f7779c6eb9f7fa17299aeadb6889018501d289e4900f7e4331b99dec4b5433ac7d329eeb6dd26545e96e55b874be909';
+
+lives-ok { hmac-sha1("foo", "bar") };
+lives-ok { hmac-sha256("foo", "bar") };
+lives-ok { hmac-sha512("foo", "bar") };
 
 # vi: ft=raku

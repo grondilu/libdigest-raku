@@ -20,9 +20,20 @@ proto sha1($)   returns blob8 is export {*}
 proto sha256($) returns blob8 is export {*}
 proto sha512($) returns blob8 is export {*}
 
-multi sha1(Str $str)   { samewith $str.encode }
+proto hmac-sha1  ($, $) returns blob8 is export {*}
+proto hmac-sha256($, $) returns blob8 is export {*}
+proto hmac-sha512($, $) returns blob8 is export {*}
+
+multi sha1  (Str $str) { samewith $str.encode }
 multi sha256(Str $str) { samewith $str.encode }
 multi sha512(Str $str) { samewith $str.encode }
+
+multi hmac-sha1  (Str   $a,       $b) { samewith $a.encode, $b }
+multi hmac-sha1  (blob8 $a, Str   $b) { samewith $a, $b.encode }
+multi hmac-sha256(Str   $a,       $b) { samewith $a.encode, $b }
+multi hmac-sha256(blob8 $a, Str   $b) { samewith $a, $b.encode }
+multi hmac-sha512(Str   $a,       $b) { samewith $a.encode, $b }
+multi hmac-sha512(blob8 $a, Str   $b) { samewith $a, $b.encode }
 
 my \primes = grep(*.is-prime, 2 .. *).list;
 
@@ -115,6 +126,33 @@ multi sha256(blob8 $data) {
 multi sha512(blob8 $b) {
   given run <openssl dgst -sha512 -binary>, :in, :out, :bin {
     .in.write: $b;
+    .in.close;
+    return .out.slurp: :close;
+  }
+}
+
+multi hmac-sha1(blob8 $a, blob8 $b) {
+  given run |<openssl dgst -sha1 -mac hmac -binary -macopt>,
+    "hexkey:{$b».fmt("%02x").join}", :in, :out, :bin {
+    .in.write: $a;
+    .in.close;
+    return .out.slurp: :close;
+  }
+}
+
+multi hmac-sha256(blob8 $a, blob8 $b) {
+  given run |<openssl dgst -sha256 -mac hmac -binary -macopt>,
+    "hexkey:{$b».fmt("%02x").join}", :in, :out, :bin {
+    .in.write: $a;
+    .in.close;
+    return .out.slurp: :close;
+  }
+}
+
+multi hmac-sha512(blob8 $a, blob8 $b) {
+  given run |<openssl dgst -sha512 -mac hmac -binary -macopt>,
+    "hexkey:{$b».fmt("%02x").join}", :in, :out, :bin {
+    .in.write: $a;
     .in.close;
     return .out.slurp: :close;
   }
