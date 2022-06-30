@@ -132,8 +132,9 @@ multi sha512(blob8 $b) {
 }
 
 multi hmac-sha1(blob8 $a, blob8 $b) {
-  given run |<openssl dgst -sha1 -mac hmac -binary -macopt>,
-    "hexkey:{$b».fmt("%02x").join}", :in, :out, :bin {
+  my $hexkey = $b».fmt("%02x").join;
+  given run |qqw{openssl mac -binary -digest SHA1 -macopt hexkey:$hexkey -in - HMAC},
+    :in, :out, :bin {
     .in.write: $a;
     .in.close;
     return .out.slurp: :close;
@@ -141,8 +142,9 @@ multi hmac-sha1(blob8 $a, blob8 $b) {
 }
 
 multi hmac-sha256(blob8 $a, blob8 $b) {
-  given run |<openssl dgst -sha256 -mac hmac -binary -macopt>,
-    "hexkey:{$b».fmt("%02x").join}", :in, :out, :bin {
+  my $hexkey = $b».fmt("%02x").join;
+  given run |qqw{openssl mac -binary -digest SHA256 -macopt hexkey:$hexkey -in - HMAC},
+    :in, :out, :bin {
     .in.write: $a;
     .in.close;
     return .out.slurp: :close;
