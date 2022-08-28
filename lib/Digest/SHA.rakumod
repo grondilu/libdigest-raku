@@ -20,6 +20,8 @@ proto sha1($)   returns blob8 is export {*}
 proto sha256($) returns blob8 is export {*}
 proto sha512($) returns blob8 is export {*}
 
+proto hmac(|) returns blob8 is export {*}
+
 proto hmac-sha1  ($, $) returns blob8 is export {*}
 proto hmac-sha256($, $) returns blob8 is export {*}
 proto hmac-sha512($, $) returns blob8 is export {*}
@@ -41,7 +43,7 @@ sub postfix:<mod2³²>(\x) { x % 2**32 }
 sub infix:<⊕>(\x,\y)     { (x + y)mod2³² }
 sub S(\n,\X)             { (X +< n)mod2³² +| (X +> (32-n)) }
  
-my \f = -> \B,\C,\D { (B +& C) +| ((+^B)mod2³² +& D)   },
+my \f = -> \B,\C,\D { (B +& C) +| (+^B +& D)   },
         -> \B,\C,\D { B +^ C +^ D                      },
         -> \B,\C,\D { (B +& C) +| (B +& D) +| (C +& D) },
         -> \B,\C,\D { B +^ C +^ D                      };
@@ -57,21 +59,20 @@ sub sha1-pad(blob8 $msg)
  
 sub sha1-block(@H, @M)
 {
-    my @W = @M;
+    my uint32 @W = @M;
     @W.push: S(1, @W[$_-3] +^ @W[$_-8] +^ @W[$_-14] +^ @W[$_-16]) for 16..79;
  
-    my ($A,$B,$C,$D,$E) = @H;
-    for 0..79 -> \t {
-        my \TEMP = S(5,$A) ⊕ f[t div 20]($B,$C,$D) ⊕ $E ⊕ @W[t] ⊕ K[t div 20];
-        $E = $D; $D = $C; $C = S(30,$B); $B = $A; $A = TEMP;
-    }
-    @H «⊕=» ($A,$B,$C,$D,$E);
+    my uint32 ($A,$B,$C,$D,$E) = @H;
+    ($A, $B, $C, $D, $E) = (
+      S(5,$A) + f[$_ div 20]($B,$C,$D) + $E + @W[$_] + K[$_ div 20], $A, S(30,$B), $C, $D
+    ) for ^80;
+    @H «+=» ($A,$B,$C,$D,$E);
 }
  
 multi sha1(blob8 $msg) {
     my @M = sha1-pad($msg);
-    my @H = 0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0;
-    sha1-block(@H,@M[$_..$_+15]) for 0,16...^+@M;
+    my uint32 @H = 0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0;
+    sha1-block(@H, @M[$_..$_+15]) for 0,16...^+@M;
     blob8.new: gather for @H {
         my $h = $_;
         for 256 «**« reverse ^4 {
