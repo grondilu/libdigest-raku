@@ -2,7 +2,7 @@
      "perl" : "6.*",
      "name" : "Digest",
      "license" : "Artistic-2.0",
-     "version" : "0.8.2",
+     "version" : "0.9.0",
      "description" : "Raku implementation of digest algorigthms.",
      "author" : "Lucien Grondin",
      "depends" : [ ],
