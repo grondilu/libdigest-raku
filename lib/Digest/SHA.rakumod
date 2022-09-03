@@ -51,7 +51,7 @@ sub sha1-pad(blob8 $msg --> blob32) {
     .rotor(4).map({ :256[|@^a] }), ($bits +> 32, $bits) »%» 2**32;
 }
  
-sub sha1-block(buf32 $H is rw, @M) {
+sub sha1-block(blob32 $H, @M) {
   constant @K = 0x5A827999, 0x6ED9EBA1, 0x8F1BBCDC, 0xCA62C1D6;
   sub S($n, $x) { ($x +< $n) +| ($x +> (32-$n)) }
   my uint32 @W = @M;
@@ -65,13 +65,13 @@ sub sha1-block(buf32 $H is rw, @M) {
     $h[2],
     $h[3]
   ] for ^80;
-    $H[] Z[+=] $h[];
+  return $H[] Z+ $h[];
 }
  
 multi sha1(blob8 $msg) {
   my blob32 $M = sha1-pad($msg);
   my buf32 $H .= new: 0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0;
-  sha1-block($H, $M.subbuf: $_, 16) for 0, 16 ...^ +$M;
+  $H[] = [sha1-block $H, $M.subbuf: $_, 16] for 0, 16 ...^ +$M;
   blob8.new: $H.map: |*.polymod(256 xx 3).reverse
 }
 
