@@ -37,91 +37,86 @@ multi hmac-sha256(blob8 $a, Str   $b) { samewith $a, $b.encode }
 multi hmac-sha512(Str   $a,       $b) { samewith $a.encode, $b }
 multi hmac-sha512(blob8 $a, Str   $b) { samewith $a, $b.encode }
 
-my \primes = grep(*.is-prime, 2 .. *).list;
+constant @primes = grep *.is-prime, 2 .. *;
 
-sub postfix:<mod2³²>(\x) { x % 2**32 }
-sub infix:<⊕>(\x,\y)     { (x + y)mod2³² }
-sub S(\n,\X)             { (X +< n)mod2³² +| (X +> (32-n)) }
+my \f = { ($^a +& $^b) +| (+^$^a +& $^c) },
+        { $^a +^ $^b +^ $^c },
+        { ($^a +& $^b) +| ($^a +& $^c) +| ($^b +& $^c) },
+        { $^a +^ $^b +^ $^c };
  
-my \f = -> \B,\C,\D { (B +& C) +| (+^B +& D)   },
-        -> \B,\C,\D { B +^ C +^ D                      },
-        -> \B,\C,\D { (B +& C) +| (B +& D) +| (C +& D) },
-        -> \B,\C,\D { B +^ C +^ D                      };
- 
-my \K = 0x5A827999, 0x6ED9EBA1, 0x8F1BBCDC, 0xCA62C1D6;
- 
-sub sha1-pad(blob8 $msg)
-{
-    my \bits = 8 * $msg.elems;
-    my @padded = flat $msg.list, 0x80, 0x00 xx (-(bits div 8 + 1 + 8) % 64);
-    flat @padded.map({ :256[$^a,$^b,$^c,$^d] }), (bits +> 32)mod2³², (bits)mod2³²;
+sub sha1-pad(blob8 $msg --> blob32) {
+  my $bits = 8 * $msg;
+  blob32.new:
+    flat (flat @$msg, 0x80, 0x00 xx (-($bits div 8 + 1 + 8) % 64))
+    .rotor(4).map({ :256[|@^a] }), ($bits +> 32, $bits) »%» 2**32;
 }
  
-sub sha1-block(@H, @M)
-{
-    my uint32 @W = @M;
-    @W.push: S(1, @W[$_-3] +^ @W[$_-8] +^ @W[$_-14] +^ @W[$_-16]) for 16..79;
- 
-    my uint32 ($A,$B,$C,$D,$E) = @H;
-    ($A, $B, $C, $D, $E) = (
-      S(5,$A) + f[$_ div 20]($B,$C,$D) + $E + @W[$_] + K[$_ div 20], $A, S(30,$B), $C, $D
-    ) for ^80;
-    @H «+=» ($A,$B,$C,$D,$E);
+sub sha1-block(buf32 $H is rw, @M) {
+  constant @K = 0x5A827999, 0x6ED9EBA1, 0x8F1BBCDC, 0xCA62C1D6;
+  sub S($n, $x) { ($x +< $n) +| ($x +> (32-$n)) }
+  my uint32 @W = @M;
+  @W.push: S(1, @W[$_-3] +^ @W[$_-8] +^ @W[$_-14] +^ @W[$_-16]) for 16..79;
+
+  my buf32 $h = $H.clone;
+  $h[] = [
+    S(5,$h[0]) + f[$_ div 20]($h[1],$h[2],$h[3]) + $h[4] + @W[$_] + @K[$_ div 20],
+    $h[0],
+    S(30,$h[1]),
+    $h[2],
+    $h[3]
+  ] for ^80;
+    $H[] Z[+=] $h[];
 }
  
 multi sha1(blob8 $msg) {
-    my @M = sha1-pad($msg);
-    my uint32 @H = 0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0;
-    sha1-block(@H, @M[$_..$_+15]) for 0,16...^+@M;
-    blob8.new: gather for @H {
-        my $h = $_;
-        for 256 «**« reverse ^4 {
-            take $h div $_; $h mod= $_;
-        }
-    }
+  my blob32 $M = sha1-pad($msg);
+  my buf32 $H .= new: 0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0;
+  sha1-block($H, $M[$_..$_+15]) for 0,16...^+$M;
+  blob8.new: $H.map: |*.polymod(256 xx 3).reverse
 }
-
-sub init(&f) { map { (($_ - .Int)*2**32).Int }, map &f, primes }
 
 sub rotr(uint32 $n, uint32 $b) { $n +> $b +| $n +< (32 - $b) }
  
-my $K = init(* **(1/3))[^64];
 multi sha256(blob8 $data) {
-    my $l = 8 * my @b = $data.list;
-    # The message is padded with a single 1 bit, and then zero bits until the
-    # length (in bits) is 448 mod 512.
-    push @b, 0x80;
-    push @b, 0 until (8*@b-448) %% 512;
+  sub init(&f) { map { (($_ - .Int)*2**32).Int }, map &f, @primes }
+  state blob32 $K .= new: init(* **(1/3))[^64];
+  my $l = 8 * my buf8 $buf .= new: $data;
+  # The message is padded with a single 1 bit, and then zero bits until the
+  # length (in bits) is 448 mod 512.
+  push $buf, 0x80;
+  push $buf, 0 until (8*$buf - 448) %% 512;
 
-    # The length of the message is pushed, with an eight bytes encoding
-    push @b, |$l.polymod(256 xx 7).reverse;
+  # The length of the message is pushed, with an eight bytes encoding
+  push $buf, |$l.polymod(256 xx 7).reverse;
 
-    # the message is turned into a list of eight-bytes words
-    my @word = @b.rotor(4).map: { :256[@$_] }
+  # the message is turned into a list of four-bytes words
+  my blob32 $words .= new: $buf.rotor(4).map: { :256[@$_] }
 
-    my @H = init(&sqrt)[^8];
-    my @w;
+  my buf32 $H .= new: init(&sqrt)[^8];
+  my buf32 $w .= new: 0 xx 64;
 
-    loop (my int $i = 0; $i < @word; $i += 16) {
-        my @h = @H;
-        loop (my int $j = 0; $j < 64; $j += 1) {
-            @w[$j] = $j < 16 ?? @word[$j + $i] // 0 !!
-                (rotr(@w[$j-15], 7) +^ rotr(@w[$j-15], 18) +^ @w[$j-15] +> 3) ⊕
-                @w[$j-7] ⊕
-                (rotr(@w[$j-2], 17) +^ rotr(@w[$j-2], 19)  +^ @w[$j-2] +> 10) ⊕
-                @w[$j-16];
-            my $ch = @h[4] +& @h[5] +^ +^@h[4] % 2**32 +& @h[6];
-            my $maj = @h[0] +& @h[2] +^ @h[0] +& @h[1] +^ @h[1] +& @h[2];
-            my $σ0 = rotr(@h[0], 2) +^ rotr(@h[0], 13) +^ rotr(@h[0], 22);
-            my $σ1 = rotr(@h[4], 6) +^ rotr(@h[4], 11) +^ rotr(@h[4], 25);
-            my $t1 = @h[7] ⊕ $σ1 ⊕ $ch ⊕ $K[$j] ⊕ @w[$j];
-            my $t2 = $σ0 ⊕ $maj;
-            @h = $t1 ⊕ $t2, @h[0], @h[1], @h[2],
-                @h[3] ⊕ $t1, @h[4], @h[5], @h[6];
-        }
-        @H [Z⊕]= @h;
+  loop (my int $i = 0; $i < +$words; $i += 16) {
+    my buf32 $h = $H.clone;
+    loop (my int $j = 0; $j < 64; $j += 1) {
+      $w[$j] = $j < 16 ?? $words[$j + $i] // 0 !!
+	(rotr($w[$j-15], 7) +^ rotr($w[$j-15], 18) +^ $w[$j-15] +> 3) +
+	$w[$j-7] +
+	(rotr($w[$j-2], 17) +^ rotr($w[$j-2], 19)  +^ $w[$j-2] +> 10) +
+	$w[$j-16];
+      my $ch = $h[4] +& $h[5] +^ +^$h[4] +& $h[6];
+      my $maj = $h[0] +& $h[2] +^ $h[0] +& $h[1] +^ $h[1] +& $h[2];
+      my $σ0 = rotr($h[0], 2) +^ rotr($h[0], 13) +^ rotr($h[0], 22);
+      my $σ1 = rotr($h[4], 6) +^ rotr($h[4], 11) +^ rotr($h[4], 25);
+      my $t1 = $h[7] + $σ1 + $ch + $K[$j] + $w[$j];
+      my $t2 = $σ0 + $maj;
+      $h[] = [
+	$t1 + $t2, $h[0], $h[1], $h[2],
+	$h[3] + $t1, $h[4], $h[5], $h[6]
+      ];
     }
-    return blob8.new: flat @H.map: *.polymod(256 xx 3).reverse;
+    $H[] Z[+=] $h[];
+  }
+  return blob8.new: $H.map: |*.polymod(256 xx 3).reverse;
 }
 
 multi sha512(blob8 $b) {
