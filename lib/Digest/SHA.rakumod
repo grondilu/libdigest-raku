@@ -142,11 +142,10 @@ multi sha512(blob8 $data) {
   constant $K = blob64.new: init(
    { integer-root( 3, $_ * 2**(64*3) ).FatRat / 2**64 }
   )[^80];
-  my buf64 $H .= new: @(
+  my buf64 $H .= new:
     constant $ = blob64.new: init(
-    { integer-root( 2, $_ * 2**128 ).FatRat / 2**64 }
-    )[^8]
-  );
+      { integer-root( 2, $_ * 2**128 ).FatRat / 2**64 }
+      )[^8];
   my buf64 $w .= new: 0 xx 80;
 
   my $l = 8 * my buf8 $buf .= new: $data;
