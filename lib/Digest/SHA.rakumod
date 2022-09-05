@@ -75,22 +75,27 @@ multi sha1(blob8 $msg) {
   blob8.new: $H.map: |*.polymod(256 xx 3).reverse
 }
 
-sub rotr(uint32 $n, uint32 $b) { $n +> $b +| $n +< (32 - $b) }
  
 multi sha256(blob8 $data) {
+
+  # fips180 sec. 4.1.2
+  sub rotr($n, $b) { $n +> $b +| $n +< (32 - $b) }
   sub init(&f) { map { (($_ - .Int)*2**32).Int }, map &f, @primes }
-  state blob32 $K .= new: init(* **(1/3))[^64];
+  sub  Ch { $^x +& $^y +^ +^$x +& $^z }
+  sub Maj { $^x +& $^y +^ $x +& $^z +^ $y +& $z }
+  sub Σ0($x) { rotr($x,  2) +^ rotr($x, 13) +^ rotr($x, 22) }
+  sub Σ1($x) { rotr($x,  6) +^ rotr($x, 11) +^ rotr($x, 25) }
+  sub σ0($x) { rotr($x,  7) +^ rotr($x, 18) +^ $x +>  3 }
+  sub σ1($x) { rotr($x, 17) +^ rotr($x, 19) +^ $x +> 10 }
+
   my $l = 8 * my buf8 $buf .= new: $data;
-  # The message is padded with a single 1 bit, and then zero bits until the
-  # length (in bits) is 448 mod 512.
   push $buf, 0x80;
   push $buf, 0 until (8*$buf - 448) %% 512;
-
-  # The length of the message is pushed, with an eight bytes encoding
   push $buf, |$l.polymod(256 xx 7).reverse;
 
-  # the message is turned into a list of four-bytes words
   my blob32 $words .= new: $buf.rotor(4).map: { :256[@$_] }
+
+  constant $K = blob32.new: init(* **(1/3))[^64];
 
   my buf32 $H .= new: init(&sqrt)[^8];
   my buf32 $w .= new: 0 xx 64;
@@ -99,32 +104,75 @@ multi sha256(blob8 $data) {
     my buf32 $h = $H.clone;
     loop (my int $j = 0; $j < 64; $j += 1) {
       $w[$j] = $j < 16 ?? $words[$j + $i] // 0 !!
-	(rotr($w[$j-15], 7) +^ rotr($w[$j-15], 18) +^ $w[$j-15] +> 3) +
-	$w[$j-7] +
-	(rotr($w[$j-2], 17) +^ rotr($w[$j-2], 19)  +^ $w[$j-2] +> 10) +
-	$w[$j-16];
-      my $ch = $h[4] +& $h[5] +^ +^$h[4] +& $h[6];
-      my $maj = $h[0] +& $h[2] +^ $h[0] +& $h[1] +^ $h[1] +& $h[2];
-      my $σ0 = rotr($h[0], 2) +^ rotr($h[0], 13) +^ rotr($h[0], 22);
-      my $σ1 = rotr($h[4], 6) +^ rotr($h[4], 11) +^ rotr($h[4], 25);
-      my $t1 = $h[7] + $σ1 + $ch + $K[$j] + $w[$j];
-      my $t2 = $σ0 + $maj;
+        σ0($w[$j-15]) + $w[$j-7] + σ1($w[$j-2]) + $w[$j-16];
+      my ($T1, $T2) =
+	$h[7] + Σ1($h[4]) + Ch(|$h[4..6]) + $K[$j] + $w[$j],
+	Σ0($h[0]) + Maj(|$h[0..2]);
       $h[] = [
-	$t1 + $t2, $h[0], $h[1], $h[2],
-	$h[3] + $t1, $h[4], $h[5], $h[6]
+	$T1 + $T2, $h[0], $h[1], $h[2],
+	$h[3] + $T1, $h[4], $h[5], $h[6]
       ];
     }
+
     $H[] Z[+=] $h[];
   }
   return blob8.new: $H.map: |*.polymod(256 xx 3).reverse;
 }
 
-multi sha512(blob8 $b) {
-  given run <openssl dgst -sha512 -binary>, :in, :out, :bin {
-    .in.write: $b;
-    .in.close;
-    return .out.slurp: :close;
+sub integer_root ( Int $p where * >= 2, Int $n --> Int ) {
+  my Int $d = $p - 1;
+  my $guess = 10**($n.chars div $p);
+  return $guess if $guess**$p == $n;
+  my $iterator = { ( $d * $^x   +   $n div $x** $d ) div $p };
+  my $endpoint = {      $^x      ** $p <= $n
+		   and ($x + 1) ** $p >  $n };
+  min (+$guess, $iterator ... $endpoint)[*-1, *-2];
+}
+
+multi sha512(blob8 $data) {
+ 
+  sub rotr($n, $b) { $n +> $b +| $n +< (64 - $b) }
+  sub init(&f) { map { (($_ - .Int)*2**64).Int }, map &f, @primes }
+  sub  Ch { $^x +& $^y +^ +^$x +& $^z }
+  sub Maj { $^x +& $^y +^ $x +& $^z +^ $y +& $z }
+  sub Σ0($x) { rotr($x, 28) +^ rotr($x, 34) +^ rotr($x, 39) }
+  sub Σ1($x) { rotr($x, 14) +^ rotr($x, 18) +^ rotr($x, 41) }
+  sub σ0($x) { rotr($x,  1) +^ rotr($x,  8) +^ $x +> 7 }
+  sub σ1($x) { rotr($x, 19) +^ rotr($x, 61) +^ $x +> 6 }
+
+  constant $K = blob64.new: init(
+   { integer_root( 3, $_ * 2**(64*3) ).FatRat / 2**64 }
+  )[^80];
+  my buf64 $H .= new: init(
+   { integer_root( 2, $_ * 2**128 ).FatRat / 2**64 }
+  )[^8];
+  my buf64 $w .= new: 0 xx 80;
+
+  my $l = 8 * my buf8 $buf .= new: $data;
+  push $buf, 0x80;
+  push $buf, 0 until (8*$buf - 896) %% 1024;
+  push $buf, |$l.polymod(256 xx 15).reverse;
+
+  my blob64 $words .= new: $buf.rotor(8).map: { :256[@$_] }
+  loop (my int $i = 0; $i < +$words; $i += 16) {
+    my buf64 $h = $H.clone;
+    loop (my int $t = 0; $t < 80; $t++) {
+      $w[$t] = (
+	$t < 16 ?? $words[$t + $i] // 0 !!
+	σ0($w[$t-15]) + $w[$t-7] + σ1($w[$t-2]) + $w[$t-16];
+      ) % 2**64;
+      my uint64 ($T1, $T2) = map *%2**64,
+	$h[7] + Σ1($h[4]) + Ch(|$h[4..6]) + $K[$t] + $w[$t],
+	Σ0($h[0]) + Maj(|$h[0..2]);
+	
+      $h[] = [ map *%2**64, 
+	$T1 + $T2, $h[0], $h[1], $h[2],
+	$h[3] + $T1, $h[4], $h[5], $h[6]
+      ];
+    }
+    $H[] = [map * % 2**64, ($H[] Z+ $h[])];
   }
+  return blob8.new: $H.map: |*.polymod(256 xx 7).reverse;
 }
 
 multi hmac-sha1(blob8 $a, blob8 $b) {
