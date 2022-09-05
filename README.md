@@ -26,7 +26,7 @@ Currently implemented:
 * Digest::SHA :
   - sha1
   - sha256
-  - sha512 (via `openssl`)
+  - sha512
 * Digest::RIPEMD :
   - rmd160
 
