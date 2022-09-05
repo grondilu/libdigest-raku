@@ -20,7 +20,6 @@ proto sha1($)   returns blob8 is export {*}
 proto sha256($) returns blob8 is export {*}
 proto sha512($) returns blob8 is export {*}
 
-proto hmac(|) returns blob8 is export {*}
 
 proto hmac-sha1  ($, $) returns blob8 is export {*}
 proto hmac-sha256($, $) returns blob8 is export {*}
@@ -97,7 +96,7 @@ multi sha256(blob8 $data) {
 
   constant $K = blob32.new: init(* **(1/3))[^64];
 
-  my buf32 $H .= new: init(&sqrt)[^8];
+  my buf32 $H .= new: constant $ = blob32.new: init(&sqrt)[^8];
   my buf32 $w .= new: 0 xx 64;
 
   loop (my int $i = 0; $i < +$words; $i += 16) {
@@ -105,7 +104,7 @@ multi sha256(blob8 $data) {
     for ^64 -> $j {
       $w[$j] = $j < 16 ?? $words[$j + $i] // 0 !!
         σ0($w[$j-15]) + $w[$j-7] + σ1($w[$j-2]) + $w[$j-16];
-      my ($T1, $T2) =
+      my uint32 ($T1, $T2) =
 	$h[7] + Σ1($h[4]) + Ch(|$h[4..6]) + $K[$j] + $w[$j],
 	Σ0($h[0]) + Maj(|$h[0..2]);
       $h[] = [
@@ -175,33 +174,23 @@ multi sha512(blob8 $data) {
   return blob8.new: $H.map: |*.polymod(256 xx 7).reverse;
 }
 
-multi hmac-sha1(blob8 $a, blob8 $b) {
-  my $hexkey = $b».fmt("%02x").join;
-  given run |qqw{openssl mac -binary -digest SHA1 -macopt hexkey:$hexkey -in - HMAC},
-    :in, :out, :bin {
-    .in.write: $a;
-    .in.close;
-    return .out.slurp: :close;
+sub hmac(&h) returns Callable is export {
+  my int $size = &h("foo").elems;
+  my ($ipad, $opad) = map { blob8.new: $_ xx $size }, 0x36, 0x5c;
+  return sub ($K, $m) {
+    if $K ~~ Str { return samewith $K.encode, $m }
+    elsif $m ~~ Str { return samewith $K, $m.encode }
+    elsif +$K > $size { return samewith &h($K), $m }
+    elsif +$K < $size { return samewith $K ~ blob8.new(0 xx ($size - $K)), $m }
+    else {
+      &h(
+	  blob8.new(@$K Z[+^] @$opad) ~
+	  &h(
+	    blob8.new(@$K Z[+^] @$ipad) ~
+	    $m
+	    )
+	)
+    }
   }
 }
-
-multi hmac-sha256(blob8 $a, blob8 $b) {
-  my $hexkey = $b».fmt("%02x").join;
-  given run |qqw{openssl mac -binary -digest SHA256 -macopt hexkey:$hexkey -in - HMAC},
-    :in, :out, :bin {
-    .in.write: $a;
-    .in.close;
-    return .out.slurp: :close;
-  }
-}
-
-multi hmac-sha512(blob8 $a, blob8 $b) {
-  given run |<openssl dgst -sha512 -mac hmac -binary -macopt>,
-    "hexkey:{$b».fmt("%02x").join}", :in, :out, :bin {
-    .in.write: $a;
-    .in.close;
-    return .out.slurp: :close;
-  }
-}
-
 # vim: ft=raku
