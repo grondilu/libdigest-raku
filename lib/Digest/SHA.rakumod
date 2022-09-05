@@ -102,7 +102,7 @@ multi sha256(blob8 $data) {
 
   loop (my int $i = 0; $i < +$words; $i += 16) {
     my buf32 $h = $H.clone;
-    loop (my int $j = 0; $j < 64; $j += 1) {
+    for ^64 -> $j {
       $w[$j] = $j < 16 ?? $words[$j + $i] // 0 !!
         σ0($w[$j-15]) + $w[$j-7] + σ1($w[$j-2]) + $w[$j-16];
       my ($T1, $T2) =
@@ -119,18 +119,17 @@ multi sha256(blob8 $data) {
   return blob8.new: $H.map: |*.polymod(256 xx 3).reverse;
 }
 
-sub integer_root ( Int $p where * >= 2, Int $n --> Int ) {
-  my Int $d = $p - 1;
-  my $guess = 10**($n.chars div $p);
-  return $guess if $guess**$p == $n;
-  my $iterator = { ( $d * $^x   +   $n div $x** $d ) div $p };
-  my $endpoint = {      $^x      ** $p <= $n
-		   and ($x + 1) ** $p >  $n };
-  min (+$guess, $iterator ... $endpoint)[*-1, *-2];
-}
-
 multi sha512(blob8 $data) {
  
+  sub integer-root ( UInt $p where * >= 2, UInt $n --> UInt ) {
+    my Int $d = $p - 1;
+    my $guess = 10**($n.chars div $p);
+    return $guess if $guess**$p == $n;
+    min (
+      +$guess, { ( $d * $^x + $n div $x**$d ) div $p } ... { $^x** $p <= $n < ($x + 1) ** $p }
+    )[*-1, *-2];
+  }
+
   sub rotr($n, $b) { $n +> $b +| $n +< (64 - $b) }
   sub init(&f) { map { (($_ - .Int)*2**64).Int }, map &f, @primes }
   sub  Ch { $^x +& $^y +^ +^$x +& $^z }
@@ -141,11 +140,13 @@ multi sha512(blob8 $data) {
   sub σ1($x) { rotr($x, 19) +^ rotr($x, 61) +^ $x +> 6 }
 
   constant $K = blob64.new: init(
-   { integer_root( 3, $_ * 2**(64*3) ).FatRat / 2**64 }
+   { integer-root( 3, $_ * 2**(64*3) ).FatRat / 2**64 }
   )[^80];
-  my buf64 $H .= new: init(
-   { integer_root( 2, $_ * 2**128 ).FatRat / 2**64 }
-  )[^8];
+  my buf64 $H .= new: @(
+    constant $ = blob64.new: init(
+    { integer-root( 2, $_ * 2**128 ).FatRat / 2**64 }
+    )[^8]
+  );
   my buf64 $w .= new: 0 xx 80;
 
   my $l = 8 * my buf8 $buf .= new: $data;
@@ -156,7 +157,7 @@ multi sha512(blob8 $data) {
   my blob64 $words .= new: $buf.rotor(8).map: { :256[@$_] }
   loop (my int $i = 0; $i < +$words; $i += 16) {
     my buf64 $h = $H.clone;
-    loop (my int $t = 0; $t < 80; $t++) {
+    for ^80 -> $t {
       $w[$t] = (
 	$t < 16 ?? $words[$t + $i] // 0 !!
 	σ0($w[$t-15]) + $w[$t-7] + σ1($w[$t-2]) + $w[$t-16];
