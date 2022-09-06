@@ -100,10 +100,11 @@ multi sha256(blob8 $data) {
 
 multi sha512(blob8 $data) {
  
-  sub integer-root ( UInt $p where * >= 2, UInt $n --> UInt ) {
-    first { $_**$p ≤ $n < ($_+1)**$p }, (
-      exp(log($n)/$p).Int, { ( ($p-1) * $^x + $n div $x**($p-1) ) div $p } ... *
-    )
+  sub accurate-root ( UInt $p where * >= 2, UInt $n --> FatRat ) {
+    my $N = $n*2**(64*$p);
+    (exp(log($N)/$p).Int, { ( ($p-1) * $^x + $N div $x**($p-1) ) div $p } ... *)
+    .first({ $_**$p ≤ $N < ($_+1)**$p })
+    .FatRat / 2**64
   }
 
   sub rotr($n, $b) { $n +> $b +| $n +< (64 - $b) }
@@ -115,13 +116,9 @@ multi sha512(blob8 $data) {
   sub σ0 { rotr($^x,  1) +^ rotr($x,  8) +^ $x +> 7 }
   sub σ1 { rotr($^x, 19) +^ rotr($x, 61) +^ $x +> 6 }
 
-  constant $K = blob64.new: init(
-   { integer-root( 3, $_ * 2**(64*3) ).FatRat / 2**64 }
-  )[^80];
+  constant $K = blob64.new: init({ accurate-root(3, $_) })[^80];
   my buf64 $H .= new:
-    constant $ = blob64.new: init(
-      { integer-root( 2, $_ * 2**(64*2) ).FatRat / 2**64 }
-      )[^8];
+    constant $ = blob64.new: init({ accurate-root(2, $_)})[^8];
   my buf64 $w .= new: 0 xx 80;
 
   my $l = 8 * my buf8 $buf .= new: $data;
