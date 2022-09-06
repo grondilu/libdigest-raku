@@ -1,8 +1,7 @@
 # Digests in raku
 
 This is a [raku](https://raku.org/) module implementing some digest algorithms
-either in pure raku (no parrot or nqp:: code), or using a process call to
-the `openssl` command.
+in pure raku (no parrot or nqp:: code).
 
 The `Digest` module also exports a subroutine `blob-to-hex` to turn a blob into
 a hexadecimal string representation.
