@@ -88,20 +88,17 @@ multi sha256(blob8 $data) {
   my buf32 $w .= new: 0 xx 64;
 
   loop (my int $i = 0; $i < +$words; $i += 16) {
-    my buf32 $h = $H.clone;
-    for ^64 -> $j {
-      $w[$j] = $j < 16 ?? $words[$j + $i] // 0 !!
-        σ0($w[$j-15]) + $w[$j-7] + σ1($w[$j-2]) + $w[$j-16];
+
+    $w[$_] = $words[$i + $_] // 0 for ^16;
+    $w[$_] = σ0($w[$_-15]) + $w[$_-7] + σ1($w[$_-2]) + $w[$_-16] for 16..^64;
+
+    $H[] Z[+=] reduce -> blob32 $h, $j {
       my uint32 ($T1, $T2) =
 	$h[7] + Σ1($h[4]) + Ch(|$h[4..6]) + $K[$j] + $w[$j],
 	Σ0($h[0]) + Maj(|$h[0..2]);
-      $h[] = [
-	$T1 + $T2, $h[0], $h[1], $h[2],
-	$h[3] + $T1, $h[4], $h[5], $h[6]
-      ];
-    }
+      blob32.new: $T1 + $T2, $h[0], $h[1], $h[2], $h[3] + $T1, $h[4], $h[5], $h[6];
+    }, $H, |^64;
 
-    $H[] Z[+=] $h[];
   }
   return blob8.new: $H.map: |*.polymod(256 xx 3).reverse;
 }
