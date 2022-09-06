@@ -84,8 +84,7 @@ multi sha256(blob8 $data) {
     map |*.polymod(256 xx 3).reverse,
     |reduce -> $H, $block {
       my blob32 $w .= new: |@$block,
-	{  my uint32 $ = σ0(@_[*-15]) + @_[*-7] + σ1(@_[*-2]) + @_[*-16] }\
-	... {$++ == 64}
+	{  my uint32 $ = σ0(@_[*-15]) + @_[*-7] + σ1(@_[*-2]) + @_[*-16] } ... {$++ == 64}
 
       blob32.new: $H[] Z+
 	reduce -> blob32 $h, $j {
@@ -102,9 +101,9 @@ multi sha256(blob8 $data) {
 multi sha512(blob8 $data) {
  
   sub integer-root ( UInt $p where * >= 2, UInt $n --> UInt ) {
-    my Int $d = $p - 1;
-    first { $_**$p ≤ $n < ($_+1)**$p }, 
-      (exp(log($n)/$p).Int, { ( $d * $^x + $n div $x**$d ) div $p } ... *);
+    first { $_**$p ≤ $n < ($_+1)**$p }, (
+      exp(log($n)/$p).Int, { ( ($p-1) * $^x + $n div $x**($p-1) ) div $p } ... *
+    )
   }
 
   sub rotr($n, $b) { $n +> $b +| $n +< (64 - $b) }
@@ -121,7 +120,7 @@ multi sha512(blob8 $data) {
   )[^80];
   my buf64 $H .= new:
     constant $ = blob64.new: init(
-      { integer-root( 2, $_ * 2**128 ).FatRat / 2**64 }
+      { integer-root( 2, $_ * 2**(64*2) ).FatRat / 2**64 }
       )[^8];
   my buf64 $w .= new: 0 xx 80;
 
