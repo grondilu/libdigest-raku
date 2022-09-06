@@ -28,24 +28,24 @@ sub md5-pad(Blob $msg --> blob32)
     blob32.new: |@padded.rotor(4).map({ :256[@^a.reverse] }), little-endian(32, 2, bits);
 }
  
-sub md5-block(buf32 $H is rw, blob32 $X)
-{
-    my buf32 $h .= new: @$H;
-    for ^64 -> $i {
-	$h[] = [
-	  $h[3], $h[1] + ($h[0] + FGHI[$i div 16](|$h[1,2,3]) + $T[$i] + $X[@k[$i]] <<< @S[$i]), $h[1], $h[2]
-	]
-    }
-    $H[] Z[+=] @$h
+sub md5-block(blob32 $H, blob32 $X --> blob32) {
+    blob32.new: $H Z+
+      reduce -> blob32 $b, $i {
+	blob32.new: 
+	  $b[3],
+	  $b[1] + ($b[0] + FGHI[$i div 16](|$b[1,2,3]) + $T[$i] + $X[@k[$i]] <<< @S[$i]),
+	  $b[1],
+	  $b[2]
+      }, $H, |^64;
 }
  
 proto md5($msg) returns Blob is export {*}
 multi md5(Str $msg) { md5 $msg.encode }
 multi md5(Blob $msg) {
-    my blob32 $M = md5-pad($msg);
-    my buf32 $H .= new: 0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476;
-    md5-block($H, $M.subbuf($_, 16)) for 0, 16 ...^ +$M;
-    Blob.new: little-endian 8, 4, @$H;
+    Blob.new: little-endian 8, 4,
+    |reduce &md5-block,
+      blob32.new(0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476),
+      |map { blob32.new: @$_ }, md5-pad($msg).rotor(16);
 }
  
 # vi: ft=raku
