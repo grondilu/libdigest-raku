@@ -20,21 +20,9 @@ proto sha1($)   returns blob8 is export {*}
 proto sha256($) returns blob8 is export {*}
 proto sha512($) returns blob8 is export {*}
 
-
-proto hmac-sha1  ($, $) returns blob8 is export {*}
-proto hmac-sha256($, $) returns blob8 is export {*}
-proto hmac-sha512($, $) returns blob8 is export {*}
-
 multi sha1  (Str $str) { samewith $str.encode }
 multi sha256(Str $str) { samewith $str.encode }
 multi sha512(Str $str) { samewith $str.encode }
-
-multi hmac-sha1  (Str   $a,       $b) { samewith $a.encode, $b }
-multi hmac-sha1  (blob8 $a, Str   $b) { samewith $a, $b.encode }
-multi hmac-sha256(Str   $a,       $b) { samewith $a.encode, $b }
-multi hmac-sha256(blob8 $a, Str   $b) { samewith $a, $b.encode }
-multi hmac-sha512(Str   $a,       $b) { samewith $a.encode, $b }
-multi hmac-sha512(blob8 $a, Str   $b) { samewith $a, $b.encode }
 
 constant @primes = grep *.is-prime, 2 .. *;
 
@@ -82,10 +70,10 @@ multi sha256(blob8 $data) {
   sub init(&f) { map { (($_ - .Int)*2**32).Int }, map &f, @primes }
   sub  Ch { $^x +& $^y +^ +^$x +& $^z }
   sub Maj { $^x +& $^y +^ $x +& $^z +^ $y +& $z }
-  sub Σ0($x) { rotr($x,  2) +^ rotr($x, 13) +^ rotr($x, 22) }
-  sub Σ1($x) { rotr($x,  6) +^ rotr($x, 11) +^ rotr($x, 25) }
-  sub σ0($x) { rotr($x,  7) +^ rotr($x, 18) +^ $x +>  3 }
-  sub σ1($x) { rotr($x, 17) +^ rotr($x, 19) +^ $x +> 10 }
+  sub Σ0 { rotr($^x,  2) +^ rotr($x, 13) +^ rotr($x, 22) }
+  sub Σ1 { rotr($^x,  6) +^ rotr($x, 11) +^ rotr($x, 25) }
+  sub σ0 { rotr($^x,  7) +^ rotr($x, 18) +^ $x +>  3 }
+  sub σ1 { rotr($^x, 17) +^ rotr($x, 19) +^ $x +> 10 }
 
   my $l = 8 * my buf8 $buf .= new: $data;
   push $buf, 0x80;
@@ -174,23 +162,4 @@ multi sha512(blob8 $data) {
   return blob8.new: $H.map: |*.polymod(256 xx 7).reverse;
 }
 
-sub hmac(&h) returns Callable is export {
-  my int $size = &h("foo").elems;
-  my ($ipad, $opad) = map { blob8.new: $_ xx $size }, 0x36, 0x5c;
-  return sub ($K, $m) {
-    if $K ~~ Str { return samewith $K.encode, $m }
-    elsif $m ~~ Str { return samewith $K, $m.encode }
-    elsif +$K > $size { return samewith &h($K), $m }
-    elsif +$K < $size { return samewith $K ~ blob8.new(0 xx ($size - $K)), $m }
-    else {
-      &h(
-	  blob8.new(@$K Z[+^] @$opad) ~
-	  &h(
-	    blob8.new(@$K Z[+^] @$ipad) ~
-	    $m
-	    )
-	)
-    }
-  }
-}
 # vim: ft=raku
