@@ -66,7 +66,6 @@ multi sha1(blob8 $msg) {
  
 multi sha256(blob8 $data) {
 
-  # fips180 sec. 4.1.2
   sub rotr($n, $b) { $n +> $b +| $n +< (32 - $b) }
   sub init(&f) { map { (($_ - .Int)*2**32).Int }, map &f, @primes }
   sub  Ch { $^x +& $^y +^ +^$x +& $^z }
@@ -81,48 +80,41 @@ multi sha256(blob8 $data) {
   push $buf, 0 until (8*$buf - 448) %% 512;
   push $buf, |$l.polymod(256 xx 7).reverse;
 
-  my blob32 $words .= new: $buf.rotor(4).map: { :256[@$_] }
+  return blob8.new: 
+    map |*.polymod(256 xx 3).reverse,
+    |reduce -> $H, $block {
+      my blob32 $w .= new: |@$block,
+	{  my uint32 $ = σ0(@_[*-15]) + @_[*-7] + σ1(@_[*-2]) + @_[*-16] }\
+	... {$++ == 64}
 
-  constant $K = blob32.new: init(* **(1/3))[^64];
-
-  my buf32 $H .= new: constant $ = blob32.new: init(&sqrt)[^8];
-  my buf32 $w .= new: 0 xx 64;
-
-  loop (my int $i = 0; $i < +$words; $i += 16) {
-
-    $w[$_] = $words[$i + $_] // 0 for ^16;
-    $w[$_] = σ0($w[$_-15]) + $w[$_-7] + σ1($w[$_-2]) + $w[$_-16] for 16..^64;
-
-    $H[] Z[+=] reduce -> blob32 $h, $j {
-      my uint32 ($T1, $T2) =
-	$h[7] + Σ1($h[4]) + Ch(|$h[4..6]) + $K[$j] + $w[$j],
-	Σ0($h[0]) + Maj(|$h[0..2]);
-      blob32.new: $T1 + $T2, $h[0], $h[1], $h[2], $h[3] + $T1, $h[4], $h[5], $h[6];
-    }, $H, |^64;
-
-  }
-  return blob8.new: $H.map: |*.polymod(256 xx 3).reverse;
+      blob32.new: $H[] Z+
+	reduce -> blob32 $h, $j {
+	  my uint32 ($T1, $T2) =
+	    $h[7] + Σ1($h[4]) + Ch(|$h[4..6]) + (constant @ = init(* **(1/3))[^64])[$j] + $w[$j],
+	    Σ0($h[0]) + Maj(|$h[0..2]);
+	  blob32.new: $T1 + $T2, $h[0], $h[1], $h[2], $h[3] + $T1, $h[4], $h[5], $h[6];
+	}, $H, |^64;
+    },
+    (constant $ = blob32.new: init(&sqrt)[^8]),
+    |blob32.new($buf.rotor(4).map: { :256[@$_] }).rotor(16)
 }
 
 multi sha512(blob8 $data) {
  
   sub integer-root ( UInt $p where * >= 2, UInt $n --> UInt ) {
     my Int $d = $p - 1;
-    my $guess = 10**($n.chars div $p);
-    return $guess if $guess**$p == $n;
-    min (
-      +$guess, { ( $d * $^x + $n div $x**$d ) div $p } ... { $^x** $p <= $n < ($x + 1) ** $p }
-    )[*-1, *-2];
+    first { $_**$p ≤ $n < ($_+1)**$p }, 
+      (exp(log($n)/$p).Int, { ( $d * $^x + $n div $x**$d ) div $p } ... *);
   }
 
   sub rotr($n, $b) { $n +> $b +| $n +< (64 - $b) }
   sub init(&f) { map { (($_ - .Int)*2**64).Int }, map &f, @primes }
   sub  Ch { $^x +& $^y +^ +^$x +& $^z }
   sub Maj { $^x +& $^y +^ $x +& $^z +^ $y +& $z }
-  sub Σ0($x) { rotr($x, 28) +^ rotr($x, 34) +^ rotr($x, 39) }
-  sub Σ1($x) { rotr($x, 14) +^ rotr($x, 18) +^ rotr($x, 41) }
-  sub σ0($x) { rotr($x,  1) +^ rotr($x,  8) +^ $x +> 7 }
-  sub σ1($x) { rotr($x, 19) +^ rotr($x, 61) +^ $x +> 6 }
+  sub Σ0 { rotr($^x, 28) +^ rotr($x, 34) +^ rotr($x, 39) }
+  sub Σ1 { rotr($^x, 14) +^ rotr($x, 18) +^ rotr($x, 41) }
+  sub σ0 { rotr($^x,  1) +^ rotr($x,  8) +^ $x +> 7 }
+  sub σ1 { rotr($^x, 19) +^ rotr($x, 61) +^ $x +> 6 }
 
   constant $K = blob64.new: init(
    { integer-root( 3, $_ * 2**(64*3) ).FatRat / 2**64 }
