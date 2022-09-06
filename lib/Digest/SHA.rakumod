@@ -102,7 +102,7 @@ multi sha512(blob8 $data) {
  
   sub accurate-root ( UInt $p where * >= 2, UInt $n --> FatRat ) {
     my $N = $n*2**(64*$p);
-    (exp(log($N)/$p).Int, { ( ($p-1) * $^x + $N div $x**($p-1) ) div $p } ... *)
+    (exp((log($n) + 64*$p*log(2))/$p).Int, { ( ($p-1) * $^x + $N div $x**($p-1) ) div $p } ... *)
     .first({ $_**$p ≤ $N < ($_+1)**$p })
     .FatRat / 2**64
   }
