@@ -38,28 +38,29 @@ sub sha1-pad(blob8 $msg --> blob32) {
     .rotor(4).map({ :256[|@^a] }), ($bits +> 32, $bits) »%» 2**32;
 }
  
-sub sha1-block(blob32 $H, @M) {
+sub sha1-block(blob32 $H, blob32 $M --> blob32) {
   constant @K = 0x5A827999, 0x6ED9EBA1, 0x8F1BBCDC, 0xCA62C1D6;
   sub S($n, $x) { ($x +< $n) +| ($x +> (32-$n)) }
-  my uint32 @W = @M;
+  my uint32 @W = @$M;
   @W.push: S(1, @W[$_-3] +^ @W[$_-8] +^ @W[$_-14] +^ @W[$_-16]) for 16..79;
-
-  my buf32 $h = $H.clone;
-  $h[] = [
-    S(5,$h[0]) + f[$_ div 20]($h[1],$h[2],$h[3]) + $h[4] + @W[$_] + @K[$_ div 20],
-    $h[0],
-    S(30,$h[1]),
-    $h[2],
-    $h[3]
-  ] for ^80;
-  return $H[] Z+ $h[];
+  blob32.new: $H Z+ (
+    reduce -> blob32 $b, $i {
+      blob32.new:
+	S(5,$b[0]) + f[$i div 20]($b[1],$b[2],$b[3]) + $b[4] + @W[$i] + @K[$i div 20],
+	$b[0],
+	S(30,$b[1]),
+	$b[2],
+	$b[3]
+    }, $H, |^80
+  )
 }
  
 multi sha1(blob8 $msg) {
-  my blob32 $M = sha1-pad($msg);
-  my buf32 $H .= new: 0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0;
-  $H[] = [sha1-block $H, $M.subbuf: $_, 16] for 0, 16 ...^ +$M;
-  blob8.new: $H.map: |*.polymod(256 xx 3).reverse
+  blob8.new: (
+    reduce &sha1-block,
+    (constant $ = blob32.new: 0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0),
+    |map { blob32.new: @$_ }, (sha1-pad $msg).rotor(16);
+  ).map: |*.polymod(256 xx 3).reverse
 }
 
  
