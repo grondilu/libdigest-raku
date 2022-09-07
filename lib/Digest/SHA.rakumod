@@ -75,19 +75,14 @@ multi sha256(blob8 $data) {
   sub σ0 { rotr($^x,  7) +^ rotr($x, 18) +^ $x +>  3 }
   sub σ1 { rotr($^x, 17) +^ rotr($x, 19) +^ $x +> 10 }
 
-  my $l = 8 * my buf8 $buf .= new: $data;
-  push $buf, 0x80;
-  push $buf, 0 until (8*$buf - 448) %% 512;
-  push $buf, |$l.polymod(256 xx 7).reverse;
-
   return blob8.new: 
     map |*.polymod(256 xx 3).reverse,
     |reduce -> $H, $block {
-      my blob32 $w .= new: |@$block,
-	{  my uint32 $ = σ0(@_[*-15]) + @_[*-7] + σ1(@_[*-2]) + @_[*-16] } ... {$++ == 64}
-
       blob32.new: $H[] Z+
 	reduce -> blob32 $h, $j {
+	  (state buf32 $w .= new)[$j] = $j < 16 ?? $block[$j] !!
+	    σ0($w[$j-15]) + $w[$j-7] + σ1($w[$j-2]) + $w[$j-16];
+
 	  my uint32 ($T1, $T2) =
 	    $h[7] + Σ1($h[4]) + Ch(|$h[4..6]) + (constant @ = init(* **(1/3))[^64])[$j] + $w[$j],
 	    Σ0($h[0]) + Maj(|$h[0..2]);
@@ -95,7 +90,15 @@ multi sha256(blob8 $data) {
 	}, $H, |^64;
     },
     (constant $ = blob32.new: init(&sqrt)[^8]),
-    |blob32.new($buf.rotor(4).map: { :256[@$_] }).rotor(16)
+    |blob32.new(
+      blob8.new(
+	@$data,
+	0x80,
+	0 xx (-($data + 1 + 8) mod 64),
+	(8*$data).polymod(256 xx 7).reverse
+      ).rotor(4)
+      .map: { :256[@$_] }
+    ).rotor(16)
 }
 
 multi sha512(blob8 $data) {
@@ -119,7 +122,6 @@ multi sha512(blob8 $data) {
   constant $K = blob64.new: init(3√*)[^80];
   my buf64 $H .= new:
   constant $  = blob64.new: init(2√*)[^8];
-  my buf64 $w .= new: 0 xx 80;
 
   my $l = 8 * my buf8 $buf .= new: $data;
   push $buf, 0x80;
@@ -130,8 +132,8 @@ multi sha512(blob8 $data) {
   loop (my int $i = 0; $i < +$words; $i += 16) {
     my buf64 $h = $H.clone;
     for ^80 -> $t {
-      $w[$t] = (
-	$t < 16 ?? $words[$t + $i] // 0 !!
+      (state buf64 $w .= new)[$t] = (
+	$t < 16 ?? $words[$t + $i] !!
 	σ0($w[$t-15]) + $w[$t-7] + σ1($w[$t-2]) + $w[$t-16];
       ) % 2**64;
       my uint64 ($T1, $T2) = map *%2**64,
