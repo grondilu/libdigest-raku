@@ -80,11 +80,13 @@ multi sha256(blob8 $data) {
     |reduce -> $H, $block {
       blob32.new: $H[] Z+
 	reduce -> blob32 $h, $j {
-	  (state buf32 $w .= new)[$j] = $j < 16 ?? $block[$j] !!
-	    σ0($w[$j-15]) + $w[$j-7] + σ1($w[$j-2]) + $w[$j-16];
-
 	  my uint32 ($T1, $T2) =
-	    $h[7] + Σ1($h[4]) + Ch(|$h[4..6]) + (constant @ = init(* **(1/3))[^64])[$j] + $w[$j],
+	    $h[7] + Σ1($h[4]) + Ch(|$h[4..6])
+	    + (constant @ = init(* **(1/3))[^64])[$j] +
+	    (
+	      (state buf32 $w .= new)[$j] = $j < 16 ?? $block[$j] !!
+	      σ0($w[$j-15]) + $w[$j-7] + σ1($w[$j-2]) + $w[$j-16]
+	    ),
 	    Σ0($h[0]) + Maj(|$h[0..2]);
 	  blob32.new: $T1 + $T2, $h[0], $h[1], $h[2], $h[3] + $T1, $h[4], $h[5], $h[6];
 	}, $H, |^64;
