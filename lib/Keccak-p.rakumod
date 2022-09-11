@@ -58,6 +58,7 @@ multi KeccakF1600(blob8 $state) {
     }
   }
   return $new-state;
+
 }
 
 our sub Keccak(
@@ -75,7 +76,6 @@ our sub Keccak(
   my $inputOffset = 0;
 
   # === Absorb all the input blocks ===
-
   while $inputOffset < $inputBytes.elems {
     $blockSize = min $inputBytes - $inputOffset, $rateInBytes;
     for ^$blockSize -> $i {
