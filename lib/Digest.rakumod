@@ -3,6 +3,44 @@ unit module Digest;
 subset HexStr of Str is export where /^[<xdigit>**2]*$/ ;
 sub blob-to-hex(Blob $b) returns HexStr is export { $b».fmt("%02x").join }
  
+sub little-endian($w, $n, *@v) { (@v X+> flat ($w X* ^$n)) X% (2 ** $w) }
+multi md5-pad(Blob $b) {
+  my \bits = 8*$b.elems;
+  blob32.new(
+    flat(
+      @$b, 0x80,
+      0x00 xx (-(bits div 8 + 1 + 8) % 64)
+    )
+    .rotor(4).map({ :256[@^a.reverse] }),
+    little-endian(32, 2, bits)
+  )
+}
+
+multi md5-pad(IO::Path $p) {
+  my $length = 0;
+  given $p.open {
+    gather {
+      until .eof {
+	take my $b = .read(64);
+	$length += $b;
+      }
+      take Blob.new: flat 0x80,  0 xx (-($length + 1 + 8) % 64),
+      (little-endian 32, 2, 8*$length).map(*.polymod(256 xx 3));
+      ;
+    }
+  }
+}
+
+CHECK given $*PROGRAM-NAME.IO {
+  use Test;
+  plan 1;
+  my ($a, $b) = blob8.new( (md5-pad .slurp.encode).map(*.polymod(256 xx 3)).flat ), [~] md5-pad $_;
+  ok $a ~~ $b;
+  #.say for md5-pad $_;
+
+  #say little-endian 32, 2, .slurp.encode.elems;
+}
+
 proto md5($msg) returns Blob is export {*}
 multi md5(Str $msg) { md5 $msg.encode }
 multi md5(Blob $msg) {
@@ -25,17 +63,17 @@ multi md5(Blob $msg) {
   sub little-endian($w, $n, *@v) { (@v X+> flat ($w X* ^$n)) X% (2 ** $w) }
   my \bits = 8 * $msg.elems;
   Blob.new: little-endian 8, 4,
-    |reduce -> blob32 $H, blob32 $X {
-      blob32.new: $H Z+
-	reduce -> blob32 $b, $i {
+    |reduce -> [$A, $B, $C, $D], blob32 $X {
+      blob32.new: [$A, $B, $C, $D] Z+
+	reduce -> $b, $i {
 	  blob32.new: 
 	    $b[3],
 	    $b[1] + ($b[0] + FGHI[$i div 16](|$b[1,2,3]) + $T[$i] + $X[@k[$i]] <<< @S[$i]),
 	    $b[1],
 	    $b[2]
-	}, $H, |^64;
+	}, [$A, $B, $C, $D], |^64;
     },
-    (constant $ = blob32.new: 0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476),
+    (constant @ = 0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476),
     |map { blob32.new: @$_ },
       blob32.new(flat(@$msg, 0x80, 0x00 xx (-(bits div 8 + 1 + 8) % 64))
 	.rotor(4).map({ :256[@^a.reverse] }), little-endian(32, 2, bits)

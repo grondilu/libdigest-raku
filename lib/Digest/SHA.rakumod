@@ -152,4 +152,18 @@ multi sha512(blob8 $data) {
   return blob8.new: $H.map: |*.polymod(256 xx 7).reverse;
 }
 
+use Keccak-p;
+
+our proto sha3_224($) is export {*}
+multi sha3_224(Str $str) { samewith $str.encode }
+multi sha3_224($inputBytes) {
+  Keccak 1152, 448, $inputBytes, 0x06, 224 div 8
+}
+
+our proto sha3_256($) is export {*}
+multi sha3_256(Str $str) { samewith $str.encode }
+multi sha3_256($inputBytes) {
+  Keccak 1088, 512, $inputBytes, 0x06, 256 div 8
+}
+
 # vim: ft=raku

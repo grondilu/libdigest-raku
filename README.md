@@ -9,8 +9,9 @@ a hexadecimal string representation.
 ## Synopsis
 
     use Digest::SHA;
-    say sha1   "hello";
-    say sha256 "Привет"; 
+    say sha1     "hello";
+    say sha256   "Привет"; 
+    say sha3_256 "bonjour";
     
     use Digest::RIPEMD;
     say rmd160 "bye";
@@ -26,6 +27,7 @@ Currently implemented:
   - sha1
   - sha256
   - sha512
+  - SHA-3 (direct translation from [this python implementation](https://github.com/XKCP/XKCP/blob/master/Standalone/CompactFIPS202/Python/CompactFIPS202.py))
 * Digest::RIPEMD :
   - rmd160
 
