@@ -7,9 +7,12 @@ The `Digest` module also exports a subroutine `blob-to-hex` to turn a blob into
 a hexadecimal string representation.
 
 ## Synopsis
+    
+    use Digest;
+    say md5      "hello";
 
     use Digest::SHA1;
-    say sha1     "hello";
+    say sha1     "Hola";
 
     use Digest::SHA2;
     say sha256   "Привет"; 
@@ -18,7 +21,7 @@ a hexadecimal string representation.
     say sha3_256 "bonjour";
     
     use Digest::RIPEMD;
-    say rmd160 "bye";
+    say rmd160   "bye";
 
 ## Features
 
