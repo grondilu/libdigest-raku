@@ -8,9 +8,13 @@ a hexadecimal string representation.
 
 ## Synopsis
 
-    use Digest::SHA;
+    use Digest::SHA1;
     say sha1     "hello";
+
+    use Digest::SHA2;
     say sha256   "Привет"; 
+
+    use Digest::SHA3;
     say sha3_256 "bonjour";
     
     use Digest::RIPEMD;
@@ -23,11 +27,16 @@ Currently implemented:
 * Digest
   - md5
   - blob-to-hex
-* Digest::SHA :
+* Digest::SHA1
   - sha1
+* Digest::SHA2
   - sha256
   - sha512
-  - SHA-3 (direct translation from [this python implementation](https://github.com/XKCP/XKCP/blob/master/Standalone/CompactFIPS202/Python/CompactFIPS202.py))
+* Digest::SHA3
+  - sha3\_224
+  - sha3\_256
+  - sha3\_384
+  - sha3\_512
 * Digest::RIPEMD :
   - rmd160
 

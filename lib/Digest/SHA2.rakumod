@@ -1,69 +1,14 @@
 #!/usr/bin/env raku
-unit module Digest::SHA;
-
-=begin Credits
-The code for SHA-1 comes from Rosetta code:
-
-L<http://rosettacode.org/wiki/SHA-1#Perl_6>
-
-The code for SHA-256 comes from a javascript implementation:
-
-Crypto-JS v2.0.0
-http:#code.google.com/p/crypto-js/
-Copyright (c) 2009, Jeff Mott. All rights reserved.
-http:#code.google.com/p/crypto-js/wiki/License
-
-It was heavily modified, though.
-=end Credits
-
-proto sha1($)   returns blob8 is export {*}
-proto sha256($) returns blob8 is export {*}
-proto sha512($) returns blob8 is export {*}
-
-multi sha1  (Str $str) { samewith $str.encode }
-multi sha256(Str $str) { samewith $str.encode }
-multi sha512(Str $str) { samewith $str.encode }
+unit module Digest::SHA2;
 
 constant @primes = grep *.is-prime, 2 .. *;
 
-my \f = { ($^a +& $^b) +| (+^$^a +& $^c) },
-        { $^a +^ $^b +^ $^c },
-        { ($^a +& $^b) +| ($^a +& $^c) +| ($^b +& $^c) },
-        { $^a +^ $^b +^ $^c };
- 
-sub sha1-pad(blob8 $msg --> blob32) {
-  my $bits = 8 * $msg;
-  blob32.new:
-    flat (flat @$msg, 0x80, 0x00 xx (-($bits div 8 + 1 + 8) % 64))
-    .rotor(4).map({ :256[|@^a] }), ($bits +> 32, $bits) »%» 2**32;
-}
- 
-sub sha1-block(blob32 $H, blob32 $M --> blob32) {
-  constant @K = 0x5A827999, 0x6ED9EBA1, 0x8F1BBCDC, 0xCA62C1D6;
-  sub S($n, $x) { ($x +< $n) +| ($x +> (32-$n)) }
-  my uint32 @W = @$M;
-  @W.push: S(1, @W[$_-3] +^ @W[$_-8] +^ @W[$_-14] +^ @W[$_-16]) for 16..79;
-  blob32.new: $H Z+ (
-    reduce -> blob32 $b, $i {
-      blob32.new:
-	S(5,$b[0]) + f[$i div 20]($b[1],$b[2],$b[3]) + $b[4] + @W[$i] + @K[$i div 20],
-	$b[0],
-	S(30,$b[1]),
-	$b[2],
-	$b[3]
-    }, $H, |^80
-  )
-}
- 
-multi sha1(blob8 $msg) {
-  blob8.new: (
-    reduce &sha1-block,
-    (constant $ = blob32.new: 0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0),
-    |map { blob32.new: @$_ }, (sha1-pad $msg).rotor(16);
-  ).map: |*.polymod(256 xx 3).reverse
-}
+proto sha256($) returns blob8 is export {*}
+proto sha512($) returns blob8 is export {*}
 
- 
+multi sha256(Str $str) { samewith $str.encode }
+multi sha512(Str $str) { samewith $str.encode }
+
 multi sha256(blob8 $data) {
 
   sub rotr($n, $b) { $n +> $b +| $n +< (32 - $b) }
@@ -151,22 +96,3 @@ multi sha512(blob8 $data) {
   }
   return blob8.new: $H.map: |*.polymod(256 xx 7).reverse;
 }
-
-use Keccak-p;
-
-our proto sha3_224($) is export {*}
-our proto sha3_256($) is export {*}
-our proto sha3_384($) is export {*}
-our proto sha3_512($) is export {*}
-
-multi sha3_224(Str $str) { samewith $str.encode }
-multi sha3_256(Str $str) { samewith $str.encode }
-multi sha3_384(Str $str) { samewith $str.encode }
-multi sha3_512(Str $str) { samewith $str.encode }
-
-multi sha3_224($inputBytes) { Keccak 1152, 448, $inputBytes, 0x06, 224 div 8 }
-multi sha3_256($inputBytes) { Keccak 1088, 512, $inputBytes, 0x06, 256 div 8 }
-multi sha3_384($inputBytes) { Keccak  832, 768, $inputBytes, 0x06, 384 div 8 }
-multi sha3_512($inputBytes) { Keccak 576, 1024, $inputBytes, 0x06, 512 div 8 }
-
-# vim: ft=raku
