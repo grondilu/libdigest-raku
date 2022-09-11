@@ -1,5 +1,11 @@
 unit module Keccak-p;
 
+# CREDITS
+# This is a straight-forward translation of
+# https://github.com/XKCP/XKCP/blob/master/Standalone/CompactFIPS202/Python/CompactFIPS202.py
+#
+
+
 sub ROL64 { ($^a +> (64 - $_) +| $a +< $_) % (1 +< 64) given $^n%64 }
 
 multi KeccakF1600(@lanes) {
