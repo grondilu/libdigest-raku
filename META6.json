@@ -2,7 +2,7 @@
      "perl" : "6.*",
      "name" : "Digest",
      "license" : "Artistic-2.0",
-     "version" : "0.17.0",
+     "version" : "0.17.1",
      "description" : "Raku implementation of digest algorigthms.",
      "author" : "Lucien Grondin",
      "depends" : [ ],
@@ -10,7 +10,7 @@
          "Digest"    : "lib/Digest.rakumod",
          "Digest::RIPEMD" : "lib/Digest/RIPEMD.rakumod",
          "Digest::SHA"    : "lib/Digest/SHA.rakumod",
-	 "Keccak"    : "lib/Keccak.rakumod"
+	 "Keccak-p"    : "lib/Keccak-p.rakumod"
      },
      "source-url" : "git://github.com/grondilu/libdigest-raku.git"
  }
