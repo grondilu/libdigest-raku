@@ -12,7 +12,7 @@ multi sha512(Str $str) { samewith $str.encode }
 multi sha256(blob8 $data) {
 
   sub rotr($n, $b) { $n +> $b +| $n +< (32 - $b) }
-  sub init(&f) { map { (($_ - .Int)*2**32).Int }, map &f, @primes }
+  sub init(&f) { map { (($_ - .floor)*2**32).floor }, map &f, @primes }
   sub  Ch { $^x +& $^y +^ +^$x +& $^z }
   sub Maj { $^x +& $^y +^ $x +& $^z +^ $y +& $z }
   sub Σ0 { rotr($^x,  2) +^ rotr($x, 13) +^ rotr($x, 22) }
@@ -58,7 +58,7 @@ multi sha512(blob8 $data) {
   }
 
   sub rotr($n, $b) { $n +> $b +| $n +< (64 - $b) }
-  sub init(&f) { map { (($_ - .Int)*2**64).Int }, map &f, @primes }
+  sub init(&f) { map { (($_ - .floor)*2**64).floor }, map &f, @primes }
   sub  Ch { $^x +& $^y +^ +^$x +& $^z }
   sub Maj { $^x +& $^y +^ $x +& $^z +^ $y +& $z }
   sub Σ0 { rotr($^x, 28) +^ rotr($x, 34) +^ rotr($x, 39) }
