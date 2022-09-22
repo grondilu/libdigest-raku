@@ -1,11 +1,9 @@
 #!/usr/bin/env raku
 unit module Digest::SHA1;
 
-proto sha1($)   returns blob8 is export {*}
+proto sha1($) returns blob8 is export {*}
 
-multi sha1  (Str $str) { samewith $str.encode }
-
-constant @primes = grep *.is-prime, 2 .. *;
+multi sha1(Str $str) { samewith $str.encode }
 
 my \f = { ($^a +& $^b) +| (+^$^a +& $^c) },
         { $^a +^ $^b +^ $^c },
@@ -20,14 +18,14 @@ sub sha1-pad(blob8 $msg --> blob32) {
 }
  
 sub sha1-block(blob32 $H, blob32 $M --> blob32) {
-  constant @K = 0x5A827999, 0x6ED9EBA1, 0x8F1BBCDC, 0xCA62C1D6;
   sub S($n, $x) { ($x +< $n) +| ($x +> (32-$n)) }
   my uint32 @W = @$M;
-  @W.push: S(1, @W[$_-3] +^ @W[$_-8] +^ @W[$_-14] +^ @W[$_-16]) for 16..79;
+  @W.push: S(1, [+^] @W[$_ X- <3 8 14 16>]) for 16..79;
   blob32.new: $H Z+ (
     reduce -> blob32 $b, $i {
       blob32.new:
-	S(5,$b[0]) + f[$i div 20]($b[1],$b[2],$b[3]) + $b[4] + @W[$i] + @K[$i div 20],
+	S(5,$b[0]) + f[$i div 20]($b[1],$b[2],$b[3]) + $b[4] + @W[$i] +
+	(constant $ = blob32.new: 0x5A827999, 0x6ED9EBA1, 0x8F1BBCDC, 0xCA62C1D6)[$i div 20],
 	$b[0],
 	S(30,$b[1]),
 	$b[2],
