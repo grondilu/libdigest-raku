@@ -19,12 +19,12 @@ sub sha1-pad(blob8 $msg --> blob32) {
  
 sub sha1-block(blob32 $H, blob32 $M --> blob32) {
   sub S($n, $x) { ($x +< $n) +| ($x +> (32-$n)) }
-  my uint32 @W = @$M;
+  my uint32 @W = $M;
   @W.push: S(1, [+^] @W[$_ X- <3 8 14 16>]) for 16..79;
   blob32.new: $H Z+ (
     reduce -> blob32 $b, $i {
       blob32.new:
-	S(5,$b[0]) + f[$i div 20]($b[1],$b[2],$b[3]) + $b[4] + @W[$i] +
+	S(5,$b[0]) + f[$i div 20](|$b[1..3]) + $b[4] + @W[$i] +
 	(constant $ = blob32.new: 0x5A827999, 0x6ED9EBA1, 0x8F1BBCDC, 0xCA62C1D6)[$i div 20],
 	$b[0],
 	S(30,$b[1]),

@@ -11,8 +11,8 @@ multi sha512(Str $str) { samewith $str.encode }
 
 multi sha256(blob8 $data) {
 
-  sub rotr($n, $b) { $n +> $b +| $n +< (32 - $b) }
-  sub init(&f) { map { (($_ - .floor)*2**32).floor }, map &f, @primes }
+  sub rotr(uint32 $n, UInt $b) { $n +> $b +| $n +< (32 - $b) }
+  sub init { map { (($_ - .floor)*2**32).floor } o &^f, @primes }
   sub  Ch { $^x +& $^y +^ +^$x +& $^z }
   sub Maj { $^x +& $^y +^ $x +& $^z +^ $y +& $z }
   sub Σ0 { rotr($^x,  2) +^ rotr($x, 13) +^ rotr($x, 22) }
@@ -27,8 +27,8 @@ multi sha256(blob8 $data) {
 	reduce -> blob32 $h, $j {
 	  my uint32 ($T1, $T2) =
 	    $h[7] + Σ1($h[4]) + Ch(|$h[4..6])
-	    + (constant @ = init(* **(1/3))[^64])[$j] +
-	    (
+	    + (constant @ = init(* **(1/3))[^64])[$j]
+	    + (
 	      (state buf32 $w .= new)[$j] = $j < 16 ?? $block[$j] !!
 	      σ0($w[$j-15]) + $w[$j-7] + σ1($w[$j-2]) + $w[$j-16]
 	    ),
@@ -58,7 +58,7 @@ multi sha512(blob8 $data) {
   }
 
   sub rotr($n, $b) { $n +> $b +| $n +< (64 - $b) }
-  sub init(&f) { map { (($_ - .floor)*2**64).floor }, map &f, @primes }
+  sub init(&f) { map { (($_ - .floor)*2**64).floor } o &f, @primes }
   sub  Ch { $^x +& $^y +^ +^$x +& $^z }
   sub Maj { $^x +& $^y +^ $x +& $^z +^ $y +& $z }
   sub Σ0 { rotr($^x, 28) +^ rotr($x, 34) +^ rotr($x, 39) }
@@ -87,9 +87,9 @@ multi sha512(blob8 $data) {
 	$h[7] + Σ1($h[4]) + Ch(|$h[4..6]) + $K[$t] + $w[$t],
 	Σ0($h[0]) + Maj(|$h[0..2]);
 	
-      $h[] = [ map *%2**64, 
-	$T1 + $T2, $h[0], $h[1], $h[2],
-	$h[3] + $T1, $h[4], $h[5], $h[6]
+      $h[] = [ 
+	($T1   + $T2) mod 2**64, $h[0], $h[1], $h[2],
+	($h[3] + $T1) mod 2**64, $h[4], $h[5], $h[6]
       ];
     }
     $H[] = [map * % 2**64, ($H[] Z+ $h[])];
