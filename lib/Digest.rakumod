@@ -31,16 +31,6 @@ multi md5-pad(IO::Path $p) {
   }
 }
 
-CHECK given $*PROGRAM-NAME.IO {
-  use Test;
-  plan 1;
-  my ($a, $b) = blob8.new( (md5-pad .slurp.encode).map(*.polymod(256 xx 3)).flat ), [~] md5-pad $_;
-  ok $a ~~ $b;
-  #.say for md5-pad $_;
-
-  #say little-endian 32, 2, .slurp.encode.elems;
-}
-
 proto md5($msg) returns Blob is export {*}
 multi md5(Str $msg) { md5 $msg.encode }
 multi md5(Blob $msg) {
