@@ -91,7 +91,7 @@ multi sha512(blob8 $data) {
 	$H[] Z+ reduce -> blob64 $h, UInt $t {
 	  my uint64 ($T1, $T2) = map *%2**64,
 	    $h[7] + Σ1($h[4]) + Ch(|$h[4..6]) +
-	    (constant $ = blob64.new: init(3√*)[^80])[$t] +
+	    (BEGIN blob64.new: init(3√*)[^80])[$t] +
 	    (
 	      (state buf64 $w .= new)[$t] = (
 		$t < 16 ?? $block[$t] !!
