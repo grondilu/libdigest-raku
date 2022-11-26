@@ -55,7 +55,7 @@ multi sha256(blob8 $data) {
 
 multi sha512(blob8 $data) {
  
-  sub infix:<√>( UInt $p where * >= 2, UInt $n --> FatRat ) is pure {
+  sub infix:<√>( UInt $p where * >= 2, UInt $n --> FatRat ) {
     my $N = $n*2**(64*$p);
     (exp(log($n)/$p + 64*log(2)).Int, { ( ($p-1) * $^x + $N div $x**($p-1) ) div $p } ... *)
     .first({ $_**$p ≤ $N < ($_+1)**$p })
@@ -63,7 +63,6 @@ multi sha512(blob8 $data) {
   }
 
   sub rotr($n, $b) { $n +> $b +| $n +< (64 - $b) }
-  sub init(&f) { map { (($_ - .floor)*2**64).floor } o &f, @primes }
   sub  Ch { $^x +& $^y +^ +^$x +& $^z }
   sub Maj { $^x +& $^y +^ $x +& $^z +^ $y +& $z }
   sub Σ0 { rotr($^x, 28) +^ rotr($x, 34) +^ rotr($x, 39) }
@@ -91,7 +90,7 @@ multi sha512(blob8 $data) {
 	$H[] Z+ reduce -> blob64 $h, UInt $t {
 	  my uint64 ($T1, $T2) = map *%2**64,
 	    $h[7] + Σ1($h[4]) + Ch(|$h[4..6]) +
-	    (BEGIN blob64.new: init(3√*)[^80])[$t] +
+	    (BEGIN blob64.new: map { frac 3√$_, 64 }, @primes[^80])[$t] +
 	    (
 	      (state buf64 $w .= new)[$t] = (
 		$t < 16 ?? $block[$t] !!
