@@ -9,12 +9,12 @@ multi sha512(Str $str) { samewith $str.encode }
 
 constant @primes = grep *.is-prime, 2 .. *;
 sub frac(Real $x, UInt $n --> Int) { (($x - $x.floor)*2**$n).floor }
+sub  Ch { $^x +& $^y +^ +^$x +& $^z }
+sub Maj { $^x +& $^y +^ $x +& $^z +^ $y +& $z }
 
 multi sha256(blob8 $data) {
 
   sub rotr(uint32 $n, UInt $b) { $n +> $b +| $n +< (32 - $b) }
-  sub  Ch { $^x +& $^y +^ +^$x +& $^z }
-  sub Maj { $^x +& $^y +^ $x +& $^z +^ $y +& $z }
   sub Σ0 { rotr($^x,  2) +^ rotr($x, 13) +^ rotr($x, 22) }
   sub Σ1 { rotr($^x,  6) +^ rotr($x, 11) +^ rotr($x, 25) }
   sub σ0 { rotr($^x,  7) +^ rotr($x, 18) +^ $x +>  3 }
@@ -63,8 +63,6 @@ multi sha512(blob8 $data) {
   }
 
   sub rotr($n, $b) { $n +> $b +| $n +< (64 - $b) }
-  sub  Ch { $^x +& $^y +^ +^$x +& $^z }
-  sub Maj { $^x +& $^y +^ $x +& $^z +^ $y +& $z }
   sub Σ0 { rotr($^x, 28) +^ rotr($x, 34) +^ rotr($x, 39) }
   sub Σ1 { rotr($^x, 14) +^ rotr($x, 18) +^ rotr($x, 41) }
   sub σ0 { rotr($^x,  1) +^ rotr($x,  8) +^ $x +> 7 }
