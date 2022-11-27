@@ -3,9 +3,6 @@
 This is a [raku](https://raku.org/) module implementing some digest algorithms
 in pure raku (no parrot or nqp:: code).
 
-The `Digest` module also exports a subroutine `blob-to-hex` to turn a blob into
-a hexadecimal string representation.
-
 ## Synopsis
     
     use Digest;
@@ -29,7 +26,6 @@ Currently implemented:
 
 * Digest
   - md5
-  - blob-to-hex
 * Digest::SHA1
   - sha1
 * Digest::SHA2

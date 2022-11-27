@@ -32,18 +32,18 @@ constant \s2 = <
   14 6 9 12 9 12 5 15 8 8 5 12 9 12 5 14 6 8 13 6 5 15 13 11 11
 >;
 
-my \F = 
-    * +^ * +^ *,
-    { $^x +& $^y +| +^$x +& $^z },
-    (* +| +^*) +^ *,
-    { $^x +& $^z +| $^y +& +^$^z },
-    { $^x +^ ($^y +| +^$^z) }
-;
-
-constant @K1 = flat (0x00000000, 0x5a827999, 0x6ed9eba1, 0x8f1bbcdc, 0xa953fd4e) »xx» 16;
-constant @K2 = flat (0x50a28be6, 0x5c4dd124, 0x6d703ef3, 0x7a6d76e9, 0x00000000) »xx» 16;
-
 multi rmd160(Blob $data) {
+    constant @K1 = flat (0x00000000, 0x5a827999, 0x6ed9eba1, 0x8f1bbcdc, 0xa953fd4e) »xx» 16;
+    constant @K2 = flat (0x50a28be6, 0x5c4dd124, 0x6d703ef3, 0x7a6d76e9, 0x00000000) »xx» 16;
+
+    my @F = 
+        * +^ * +^ *,
+        { $^x +& $^y +| +^$x +& $^z },
+        (* +| +^*) +^ *,
+        { $^x +& $^z +| $^y +& +^$^z },
+        { $^x +^ ($^y +| +^$^z) }
+    ;
+
     my buf8 $b .= new: |@$data, 0x80;
     $b.push: 0 until (8*@$b-448) %% 512;
     $b.push: |(8 * $data).polymod: 256 xx 7;
@@ -52,10 +52,10 @@ multi rmd160(Blob $data) {
     my buf32 $h .= new: 0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476, 0xc3d2e1f0;
     loop (my $i = 0; $i < @$word; $i += 16) {
         my buf32 ($X, $Y) = $h.clone xx 2;
-	for ^80 -> $j {
-	    $X[] = [$X[4], rotl(($X[0] + F[    $j  div 16](|$X[1..3]) + ($word[$i+r1[$j]] // 0) + @K1[$j]) mod 2**32, s1[$j]) + $X[4], $X[1], rotl($X[2], 10), $X[3]];
-	    $Y[] = [$Y[4], rotl(($Y[0] + F[(79-$j) div 16](|$Y[1..3]) + ($word[$i+r2[$j]] // 0) + @K2[$j]) mod 2**32, s2[$j]) + $Y[4], $Y[1], rotl($Y[2], 10), $Y[3]];
-	}
+        for ^80 -> $j {
+            $X[] = [$X[4], rotl(($X[0] + @F[    $j  div 16](|$X[1..3]) + ($word[$i+r1[$j]] // 0) + @K1[$j]) mod 2**32, s1[$j]) + $X[4], $X[1], rotl($X[2], 10), $X[3]];
+            $Y[] = [$Y[4], rotl(($Y[0] + @F[(79-$j) div 16](|$Y[1..3]) + ($word[$i+r2[$j]] // 0) + @K2[$j]) mod 2**32, s2[$j]) + $Y[4], $Y[1], rotl($Y[2], 10), $Y[3]];
+        }
         $h[] = [$h[1,2,3,4,0] Z+ $X[2,3,4,0,1] Z+ $Y[3,4,0,1,2]];
     }
     return blob8.new: $h.map: |*.polymod: 256 xx 3;
