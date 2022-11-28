@@ -2,7 +2,6 @@ unit module Digest;
 
 subset HexStr of Str is export where /^[<xdigit>**2]*$/ ;
  
-sub little-endian($w, $n, *@v) { (@v X+> flat ($w X* ^$n)) X% (2 ** $w) }
 proto md5($msg) returns Blob is export {*}
 multi md5(Str $msg) { md5 $msg.encode }
 multi md5(Blob $msg) {
