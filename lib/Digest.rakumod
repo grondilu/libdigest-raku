@@ -3,33 +3,6 @@ unit module Digest;
 subset HexStr of Str is export where /^[<xdigit>**2]*$/ ;
  
 sub little-endian($w, $n, *@v) { (@v X+> flat ($w X* ^$n)) X% (2 ** $w) }
-multi md5-pad(Blob $b) {
-  my \bits = 8*$b.elems;
-  blob32.new(
-    flat(
-      @$b, 0x80,
-      0x00 xx (-(bits div 8 + 1 + 8) % 64)
-    )
-    .rotor(4).map({ :256[@^a.reverse] }),
-    little-endian(32, 2, bits)
-  )
-}
-
-multi md5-pad(IO::Path $p) {
-  my $length = 0;
-  given $p.open {
-    gather {
-      until .eof {
-        take my $b = .read(64);
-        $length += $b;
-      }
-      take Blob.new: flat 0x80,  0 xx (-($length + 1 + 8) % 64),
-      (little-endian 32, 2, 8*$length).map(*.polymod(256 xx 3));
-      ;
-    }
-  }
-}
-
 proto md5($msg) returns Blob is export {*}
 multi md5(Str $msg) { md5 $msg.encode }
 multi md5(Blob $msg) {
