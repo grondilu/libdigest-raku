@@ -20,10 +20,7 @@ multi md5(Blob $msg) {
               { $^y +^ ($^x +| +^$^z) }
 	    )[$i div 16](|$b[1..3]) +
 	    (BEGIN blob32.new: ^64 .map: { floor(abs(sin($_ + 1)) * 2**32) })[$i] +
-	    $X[(BEGIN Blob.new: flat ^16,
-               ((5*$_ + 1) % 16 for ^16),
-               ((3*$_ + 5) % 16 for ^16),
-               ((7*$_    ) % 16 for ^16))[$i]
+	    $X[(BEGIN Blob.new: 16 X[R%] flat ($++, 5*$++ + 1, 3*$++ + 5, 7*$++) Xxx 16)[$i]
 	       ] <<< (BEGIN flat < 7 12 17 22 5 9 14 20 4 11 16 23 6 10 15 21 >.rotor(4) X[xx] 4)[$i]
 	    ),
             $b[1],
