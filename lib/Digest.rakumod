@@ -21,7 +21,7 @@ multi md5(Blob $msg) {
 	    )[$i div 16](|$b[1..3]) +
 	    (BEGIN blob32.new: map &floor ∘ * * 2**32 ∘ &abs ∘ &sin ∘ * + 1, ^64)[$i] +
 	    $X[(BEGIN Blob.new: 16 X[R%] flat ($++, 5*$++ + 1, 3*$++ + 5, 7*$++) Xxx 16)[$i]]
-	    <<< (BEGIN flat < 7 12 17 22 5 9 14 20 4 11 16 23 6 10 15 21 >.rotor(4) X[xx] 4)[$i]
+	    <<< (BEGIN flat < 7 12 17 22 5 9 14 20 4 11 16 23 6 10 15 21 >.rotor(4) Xxx 4)[$i]
 	    ),
             $b[1],
             $b[2]
