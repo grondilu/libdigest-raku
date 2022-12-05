@@ -8,7 +8,7 @@ sub sha1-pad(blob8 $msg --> blob32) {
   my $bits = 8 * $msg;
   blob32.new:
     flat (flat @$msg, 0x80, 0x00 xx (-($bits div 8 + 1 + 8) % 64))
-    .rotor(4).map({ :256[|@^a] }), ($bits +> 32, $bits) »%» 2**32;
+    .rotor(4).map({ :256[|@^a] }), ($bits +> 32, $bits);
 }
  
 sub sha1-block(blob32 $H, blob32 $M where $M == 16 --> blob32) {
@@ -18,17 +18,17 @@ sub sha1-block(blob32 $H, blob32 $M where $M == 16 --> blob32) {
   blob32.new: $H Z+ (
     reduce -> blob32 $b, $i {
       blob32.new:
-	S(5,$b[0]) + (
-	  { ($^a +& $^b) +| (+^$^a +& $^c) },
-	  { $^a +^ $^b +^ $^c },
-	  { ($^a +& $^b) +| ($^a +& $^c) +| ($^b +& $^c) },
-	  { $^a +^ $^b +^ $^c }
-	)[$i div 20](|$b[1..3]) + $b[4] + @W[$i] +
-	<0x5A827999 0x6ED9EBA1 0x8F1BBCDC 0xCA62C1D6>[$i div 20],
-	$b[0],
-	S(30,$b[1]),
-	$b[2],
-	$b[3]
+        S(5,$b[0]) + (
+          { ($^a +& $^b) +| (+^$^a +& $^c) },
+          { $^a +^ $^b +^ $^c },
+          { ($^a +& $^b) +| ($^a +& $^c) +| ($^b +& $^c) },
+          { $^a +^ $^b +^ $^c }
+        )[$i div 20](|$b[1..3]) + $b[4] + @W[$i] +
+        <0x5A827999 0x6ED9EBA1 0x8F1BBCDC 0xCA62C1D6>[$i div 20],
+        $b[0],
+        S(30,$b[1]),
+        $b[2],
+        $b[3]
     }, $H, |^80
   )
 }
