@@ -7,6 +7,11 @@ in pure raku (no parrot or nqp:: code).
     
     use Digest;
     say md5      "hello";
+    say hmac
+      key => "key",
+      msg => "The quick brown fox jumps over the lazy dog", 
+      hash => &md5,
+      block-size => 64;
 
     use Digest::SHA1;
     say sha1     "Hola";
@@ -19,6 +24,7 @@ in pure raku (no parrot or nqp:: code).
     
     use Digest::RIPEMD;
     say rmd160   "bye";
+    
 
 ## Features
 
@@ -26,6 +32,7 @@ Currently implemented:
 
 * Digest
   - md5
+  - hmac
 * Digest::SHA1
   - sha1
 * Digest::SHA2
