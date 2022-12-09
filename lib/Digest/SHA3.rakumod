@@ -22,10 +22,10 @@ multi sha3_512(Blob $input) { Keccak $input, delimitedSuffix => 0x06, outputByte
 multi shake128(Blob $input, UInt $outputByteLen) { Keccak $input, delimitedSuffix => 0x1F, :$outputByteLen, rate => 1344, capacity => 256 }
 multi shake256(Blob $input, UInt $outputByteLen) { Keccak $input, delimitedSuffix => 0x1F, :$outputByteLen, rate => 1088, capacity => 512 }
 
-# CREDITS
-# This is a straight-forward translation of
-# https://github.com/XKCP/XKCP/blob/master/Standalone/CompactFIPS202/Python/CompactFIPS202.py
-#
+=for CREDITS
+The following is a straight-forward translation of
+L<https://github.com/XKCP/XKCP/blob/master/Standalone/CompactFIPS202/Python/CompactFIPS202.py>
+
 
 sub ROL64 { ($^a +> (64 - $_) +| $a +< $_) % (1 +< 64) given $^n%64 }
 
