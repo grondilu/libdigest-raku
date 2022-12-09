@@ -5,8 +5,9 @@ in pure raku (no parrot or nqp:: code).
 
 ## Synopsis
     
-    use Digest;
+    use Digest::MD5;
     say md5      "hello";
+    use Digest::HMAC;
     say hmac
       key => "key",
       msg => "The quick brown fox jumps over the lazy dog", 

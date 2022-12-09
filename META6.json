@@ -7,7 +7,8 @@
      "author" : "Lucien Grondin",
      "depends" : [ ],
      "provides" : {
-         "Digest"    : "lib/Digest.rakumod",
+	 "Digest::MD5"    : "lib/Digest/MD5.rakumod",
+	 "Digest::HMAC"   : "lib/Digest/HMAC.rakumod",
          "Digest::RIPEMD" : "lib/Digest/RIPEMD.rakumod",
          "Digest::SHA1"   : "lib/Digest/SHA1.rakumod",
          "Digest::SHA2"   : "lib/Digest/SHA2.rakumod",

@@ -2,7 +2,7 @@
 # https://www.rfc-editor.org/rfc/rfc4231
 #
 use Test;
-use Digest;
+use Digest::HMAC;
 use Digest::SHA2;
 
 sub hex-to-blob { blob8.new: $^str.comb(/../).map({:16($_)}) }
