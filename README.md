@@ -41,7 +41,9 @@ Currently implemented:
 * Digest::SHA1
   - sha1
 * Digest::SHA2
+  - sha224
   - sha256
+  - sha384
   - sha512
 * Digest::SHA3
   - sha3\_224

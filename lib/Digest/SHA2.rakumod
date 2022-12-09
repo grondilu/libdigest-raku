@@ -1,18 +1,43 @@
 #!/usr/bin/env raku
 unit module Digest::SHA2;
 
-proto sha256($) returns blob8 is export {*}
-proto sha512($) returns blob8 is export {*}
+proto sha224($) returns blob8 is export {*}
+proto sha256(|) returns blob8 is export {*}
+proto sha384($) returns blob8 is export {*}
+proto sha512(|) returns blob8 is export {*}
 
+multi sha224(Str $str) { samewith $str.encode }
 multi sha256(Str $str) { samewith $str.encode }
+multi sha384(Str $str) { samewith $str.encode }
 multi sha512(Str $str) { samewith $str.encode }
 
 constant @primes = grep *.is-prime, 2 .. *;
+sub infix:<√>( UInt $p where * >= 2, UInt $n --> FatRat ) {
+  my $N = $n*2**(64*$p);
+  (exp(log($n)/$p + 64*log(2)).Int, { ( ($p-1) * $^x + $N div $x**($p-1) ) div $p } ... *)
+  .first({ $_**$p ≤ $N < ($_+1)**$p })
+  .FatRat / 2**64
+}
+
 sub frac(Real $x, UInt $n --> Int) { (($x - $x.floor)*2**$n).floor }
 sub  Ch { $^x +& $^y +^ +^$x +& $^z }
 sub Maj { $^x +& $^y +^ $x +& $^z +^ $y +& $z }
 
-multi sha256(blob8 $data) {
+multi sha224(blob8 $data) {
+  sha256(
+    $data,
+    initial-hash => 
+      BEGIN blob32.new:
+	0xc1059ed8, 0x367cd507, 0x3070dd17, 0xf70e5939,
+	0xffc00b31, 0x68581511, 0x64f98fa7, 0xbefa4fa4
+  ).subbuf(0, 28)
+}
+
+multi sha256(
+  blob8  $data,
+  blob32 :$initial-hash = 
+    BEGIN blob32.new: map { frac sqrt($_), 32 }, @primes[^8]
+) {
 
   sub rotr(uint32 $n, UInt $b) { $n +> $b +| $n +< (32 - $b) }
   sub Σ0 { rotr($^x,  2) +^ rotr($x, 13) +^ rotr($x, 22) }
@@ -21,7 +46,7 @@ multi sha256(blob8 $data) {
   sub σ1 { rotr($^x, 17) +^ rotr($x, 19) +^ $x +> 10 }
 
   return blob8.new: (
-    (BEGIN blob32.new: map { frac sqrt($_), 32 }, @primes[^8]),
+    $initial-hash,
     |blob32.new(
       (
 	@$data,
@@ -53,15 +78,20 @@ multi sha256(blob8 $data) {
 
 }
 
-multi sha512(blob8 $data) {
- 
-  sub infix:<√>( UInt $p where * >= 2, UInt $n --> FatRat ) {
-    my $N = $n*2**(64*$p);
-    (exp(log($n)/$p + 64*log(2)).Int, { ( ($p-1) * $^x + $N div $x**($p-1) ) div $p } ... *)
-    .first({ $_**$p ≤ $N < ($_+1)**$p })
-    .FatRat / 2**64
-  }
+multi sha384(blob8 $data) {
+  sha512(
+    $data,
+    initial-hash => 
+      BEGIN blob64.new: map { frac 2√$_, 64 }, @primes[8..^16]
+  ).subbuf(0, 48)
+}
 
+multi sha512(
+  blob8 $data,
+  blob64 :$initial-hash = 
+    BEGIN blob64.new: map { frac 2√$_, 64 }, @primes[^8]
+) {
+ 
   sub rotr($n, $b) { $n +> $b +| $n +< (64 - $b) }
   sub Σ0 { rotr($^x, 28) +^ rotr($x, 34) +^ rotr($x, 39) }
   sub Σ1 { rotr($^x, 14) +^ rotr($x, 18) +^ rotr($x, 41) }
@@ -70,7 +100,7 @@ multi sha512(blob8 $data) {
 
   blob8.new:
   (
-    (BEGIN blob64.new: map { frac 2√$_, 64 }, @primes[^8]),
+    $initial-hash,
     |blob64.new(
       (
 	flat
