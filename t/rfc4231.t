@@ -289,4 +289,6 @@ subtest {
    ;
 
 }
+
+done-testing;
 # vi: ft=raku
