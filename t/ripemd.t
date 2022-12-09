@@ -15,7 +15,7 @@ for (
   '1234567890' x 8 => '9b752e45573d4b39f4dbd3323cab82bf63326bfb'
   # 'a' x 1_000_000 => '52783243c1697bdbe16d37f97f68f08325dc1528'
 ) {
-  is blob-to-hex(rmd160(.key)), .value, "RIPEMD({.key})";
+  is rmd160(.key), Blob.new(parse-base(.value, 16).polymod(256 xx *).reverse), "RIPEMD('{.key}')";
 }
 
 # vim: ft=raku

@@ -1,20 +1,30 @@
 # Digests in raku
 
 This is a [raku](https://raku.org/) module implementing some digest algorithms
-either in pure raku (no parrot or nqp:: code), or using a process call to
-the `openssl` command.
-
-The `Digest` module also exports a subroutine `blob-to-hex` to turn a blob into
-a hexadecimal string representation.
+in pure raku (no parrot or nqp:: code).
 
 ## Synopsis
+    
+    use Digest;
+    say md5      "hello";
+    say hmac
+      key => "key",
+      msg => "The quick brown fox jumps over the lazy dog", 
+      hash => &md5,
+      block-size => 64;
 
-    use Digest::SHA;
-    say sha1   "hello";
-    say sha256 "Привет"; 
+    use Digest::SHA1;
+    say sha1     "Hola";
+
+    use Digest::SHA2;
+    say sha256   "Привет"; 
+
+    use Digest::SHA3;
+    say sha3_256 "bonjour";
     
     use Digest::RIPEMD;
-    say rmd160 "bye";
+    say rmd160   "bye";
+    
 
 ## Features
 
@@ -22,11 +32,17 @@ Currently implemented:
 
 * Digest
   - md5
-  - blob-to-hex
-* Digest::SHA :
+  - hmac
+* Digest::SHA1
   - sha1
+* Digest::SHA2
   - sha256
-  - sha512 (via `openssl`)
+  - sha512
+* Digest::SHA3
+  - sha3\_224
+  - sha3\_256
+  - sha3\_384
+  - sha3\_512
 * Digest::RIPEMD :
   - rmd160
 
