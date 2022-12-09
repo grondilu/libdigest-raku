@@ -1,4 +1,4 @@
-unit module Digest;
+unit module Digest::MD5;
 
 proto md5($msg) returns Blob is export {*}
 multi md5(Str $msg) { md5 $msg.encode }
@@ -33,22 +33,6 @@ multi md5(Blob $msg) {
         .rotor(4).map({ :256[@^a.reverse] }), |little-endian(32, 2, bits)
       )
     .rotor(16);
-}
- 
-proto hmac(
-  :$key,
-  :$msg,
-  :&hash,
-  UInt :$block-size
-) returns Blob is export {*}
-
-multi hmac(Str :$key,     :$msg, :&hash, :$block-size) { samewith key => $key.encode, :$msg,        :&hash, :$block-size }
-multi hmac(    :$key, Str :$msg, :&hash, :$block-size) { samewith       :$key,  msg => $msg.encode, :&hash, :$block-size }
-
-multi hmac(Blob :$key is copy, Blob :$msg, :&hash, :$block-size) {
-  if +$key > $block-size { $key.=&hash }
-  if +$key < $block-size { $key ~= Blob.new: 0 xx ($block-size - $key) }
-  reduce -> $m, $i { &hash(blob8.new(@$key Z[+^] $i xx *) ~ $m) }, $msg, 0x36, 0x5c;
 }
 
 # vi: ft=raku
