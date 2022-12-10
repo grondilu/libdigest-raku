@@ -159,21 +159,10 @@ subtest {
 subtest {
   my ($key, $msg) = Blob.new(0x0c xx 20), "Test With Truncation";
 
-  is hmac(:$key, :$msg, |%sha224).subbuf(0,16),
-    hex-to-blob "0e2aea68a90c8d37c988bcdb9fca6fa8"
-  ;
-
-  is hmac(:$key, :$msg, |%sha256).subbuf(0,16),
-    hex-to-blob "a3b6167473100ee06e0c796c2955552b"
-  ;
-
-  is hmac(:$key, :$msg, |%sha384).subbuf(0,16),
-    hex-to-blob "3abf34c3503b2a23a46efc619baef897"
-    ;
-
-  is hmac(:$key, :$msg, |%sha512).subbuf(0,16),
-    hex-to-blob "415fad6271580a531d4179bc891d87a6"
-  ;
+  is hmac(:$key, :$msg, |%sha224).subbuf(0,16), hex-to-blob "0e2aea68a90c8d37c988bcdb9fca6fa8";
+  is hmac(:$key, :$msg, |%sha256).subbuf(0,16), hex-to-blob "a3b6167473100ee06e0c796c2955552b";
+  is hmac(:$key, :$msg, |%sha384).subbuf(0,16), hex-to-blob "3abf34c3503b2a23a46efc619baef897";
+  is hmac(:$key, :$msg, |%sha512).subbuf(0,16), hex-to-blob "415fad6271580a531d4179bc891d87a6";
 
 }
 
@@ -232,7 +221,7 @@ subtest {
   is hmac(:$key, :$msg, |%sha224),
     hex-to-blob <
       3a854166ac5d9f023f54d517d0b39dbd
-		946770db9c2b95c9f6f565d1
+      946770db9c2b95c9f6f565d1
   >.join
   ;
 
