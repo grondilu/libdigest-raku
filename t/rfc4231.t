@@ -7,16 +7,14 @@ use Digest::SHA2;
 
 sub hex-to-blob { blob8.new: $^str.comb(/../).map({:16($_)}) }
 
-constant %sha224 = hash => sub {...}, block-size => UInt;
+constant %sha224 = hash => &sha224, block-size => 64;
 constant %sha256 = hash => &sha256, block-size => 64;
-constant %sha384 = hash => sub {...}, block-size => UInt;
+constant %sha384 = hash => &sha384, block-size => 128;
 constant %sha512 = hash => &sha512, block-size => 128;
 
 subtest {
   my ($key, $msg) = Blob.new(0x0b xx 20), "Hi There";
 
-  skip "SHA-224 NYI";
-  =for sha224
   is hmac(:$key, :$msg, |%sha224),
     hex-to-blob <
       896fb1128abbdf196832107cd49df33f
@@ -31,9 +29,7 @@ subtest {
     >.join
   ;
     
-  skip "SHA-384 NYI";
-  =for sha384
-  is hmac(:$key, :$msg, |%sha224),
+  is hmac(:$key, :$msg, |%sha384),
     hex-to-blob <
       afd03944d84895626b0825f4ab46907f
       15f9dadbe4101ec682aa034c7cebc59c
@@ -55,8 +51,6 @@ subtest {
 subtest  {
   my ($key, $msg) = "Jefe", "what do ya want for nothing?";
 
-  skip "SHA-224 NYI";
-  =for sha224
   is hmac(:$key, :$msg, |%sha224),
     hex-to-blob <
       a30e01098bc6dbbf45690f3a7e9e6d0f
@@ -71,9 +65,7 @@ subtest  {
     >.join
   ;
     
-  skip "SHA-384 NYI";
-  =for sha384
-  is hmac(:$key, :$msg, |%sha224),
+  is hmac(:$key, :$msg, |%sha384),
     hex-to-blob <
       af45d2e376484031617f78d2b58a6b1b
       9c7ef464f5a01b47e42ec3736322445e
@@ -95,14 +87,12 @@ is hmac(:$key, :$msg, |%sha512),
 subtest {
   my ($key, $msg) = Blob.new(0xaa xx 20), Blob.new(0xdd xx 50);
 
-  skip "SHA-224 NYI";
-  =for sha224
-    is hmac(:$key, :$msg, |%sha224),
-      hex-to-blob <
-        7fb3cb3588c6c1f6ffa9694d7d6ad264
-	9365b0c1f65d69d1ec8333ea
-    >.join
-    ;
+  is hmac(:$key, :$msg, |%sha224),
+    hex-to-blob <
+      7fb3cb3588c6c1f6ffa9694d7d6ad264
+      9365b0c1f65d69d1ec8333ea
+  >.join
+  ;
 
   is hmac(:$key, :$msg, |%sha256),
     hex-to-blob <
@@ -111,9 +101,7 @@ subtest {
     >.join
   ;
 
-  skip "SHA-384 NYI";
-  =for sha384
-  is hmac(:$key, :$msg, |%sha224),
+  is hmac(:$key, :$msg, |%sha384),
     hex-to-blob <
       88062608d3e6ad8a0aa2ace014c8a86f
       0aa635d947ac9febe83ef4e55966144b
@@ -135,14 +123,12 @@ subtest {
 subtest {
   my ($key, $msg) = Blob.new(1..25), Blob.new(0xcd xx 50);
 
-  skip "SHA-224 NYI";
-  =for sha224
-    is hmac(:$key, :$msg, |%sha224),
-      hex-to-blob <
-        6c11506874013cac6a2abc1bb382627c
-	ec6a90d86efc012de7afec5a
-    >.join
-    ;
+  is hmac(:$key, :$msg, |%sha224),
+    hex-to-blob <
+      6c11506874013cac6a2abc1bb382627c
+      ec6a90d86efc012de7afec5a
+  >.join
+  ;
 
   is hmac(:$key, :$msg, |%sha256),
     hex-to-blob <
@@ -151,9 +137,7 @@ subtest {
     >.join
   ;
 
-  skip "SHA-384 NYI";
-  =for sha384
-  is hmac(:$key, :$msg, |%sha224),
+  is hmac(:$key, :$msg, |%sha384),
     hex-to-blob <
       3e8a69b7783c25851933ab6290af6ca7
       7a9981480850009cc5577c6e1f573b4e
@@ -175,19 +159,15 @@ subtest {
 subtest {
   my ($key, $msg) = Blob.new(0x0c xx 20), "Test With Truncation";
 
-  skip "SHA-224 NYI";
-  =for sha224
-    is hmac(:$key, :$msg, |%sha224).subbuf(0,16),
-      hex-to-blob "0e2aea68a90c8d37c988bcdb9fca6fa8"
+  is hmac(:$key, :$msg, |%sha224).subbuf(0,16),
+    hex-to-blob "0e2aea68a90c8d37c988bcdb9fca6fa8"
   ;
 
   is hmac(:$key, :$msg, |%sha256).subbuf(0,16),
     hex-to-blob "a3b6167473100ee06e0c796c2955552b"
   ;
 
-  skip "SHA-384 NYI";
-  =for sha384
-  is hmac(:$key, :$msg, |%sha224).subbuf(0,16),
+  is hmac(:$key, :$msg, |%sha384).subbuf(0,16),
     hex-to-blob "3abf34c3503b2a23a46efc619baef897"
     ;
 
@@ -201,14 +181,12 @@ subtest {
   my ($key, $msg) = blob8.new(0xaa xx 131),
     "Test Using Larger Than Block-Size Key - Hash Key First";
 
-  skip "SHA-224 NYI";
-  =for sha224
-    is hmac(:$key, :$msg, |%sha224),
-      hex-to-blob <
-        95e9a0db962095adaebe9b2d6f0dbce2
-	d499f112f2d2b7273fa6870e
-    >.join
-    ;
+  is hmac(:$key, :$msg, |%sha224),
+    hex-to-blob <
+      95e9a0db962095adaebe9b2d6f0dbce2
+      d499f112f2d2b7273fa6870e
+  >.join
+  ;
 
   is hmac(:$key, :$msg, |%sha256),
     hex-to-blob <
@@ -217,9 +195,7 @@ subtest {
     >.join
   ;
 
-  skip "SHA-384 NYI";
-  =for sha384
-  is hmac(:$key, :$msg, |%sha224),
+  is hmac(:$key, :$msg, |%sha384),
     hex-to-blob <
       4ece084485813e9088d2c63a041bc5b4
       4f9ef1012a2b588f3cd11f05033ac4c6
@@ -253,14 +229,12 @@ subtest {
       "gorithm.",
     ).join;
 
-  skip "SHA-224 NYI";
-  =for sha224
-    is hmac(:$key, :$msg, |%sha224),
-      hex-to-blob <
-        3a854166ac5d9f023f54d517d0b39dbd
-                  946770db9c2b95c9f6f565d1
-    >.join
-    ;
+  is hmac(:$key, :$msg, |%sha224),
+    hex-to-blob <
+      3a854166ac5d9f023f54d517d0b39dbd
+		946770db9c2b95c9f6f565d1
+  >.join
+  ;
 
   is hmac(:$key, :$msg, |%sha256),
     hex-to-blob <
@@ -269,9 +243,7 @@ subtest {
     >.join
   ;
 
-  skip "SHA-384 NYI";
-  =for sha384
-  is hmac(:$key, :$msg, |%sha224),
+  is hmac(:$key, :$msg, |%sha384),
     hex-to-blob <
       6617178e941f020d351e2f254e8fd32c
       602420feb0b8fb9adccebb82461e99c5
