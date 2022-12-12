@@ -44,10 +44,6 @@ multi rmd160(Blob $data) {
         { $^x +^ ($^y +| +^$^z) }
     ;
 
-    my buf8 $b .= new: $data.list, 0x80;
-    $b.push: 0 until (8*@$b-448) %% 512;
-    $b.push: |(8 * $data).polymod: 256 xx 7;
- 
     blob8.new: (
       reduce
 	-> blob32 $h, @words {
@@ -56,8 +52,14 @@ multi rmd160(Blob $data) {
 	  Z+ start { reduce -> $Y, $j { blob32.new($Y[4], rotl(($Y[0] + @F[(79-$j) div 16](|$Y[1..3]) + @words[r2[$j]] + @K2[$j]) mod 2**32, s2[$j]) + $Y[4], $Y[1], rotl($Y[2], 10), $Y[3]); }, $h.clone, |^80; }.result[3,4,0,1,2];
 	},
 	(BEGIN blob32.new(0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476, 0xc3d2e1f0)),
-	|blob32.new($b.rotor(4).map: { :256[@^x.reverse] }).rotor(16);
-    ).map: |*.polymod(256 xx 3);
+	|blob32.new(
+	  blob8.new(
+	    $data.list,
+	    0x80,
+	    0 xx (-($data.elems + 1 + 8) % 64),
+	    |(8 * $data).polymod: 256 xx 7
+	  ).rotor(4).map: { :256[@^x.reverse] }).rotor(16);
+	).map: |*.polymod(256 xx 3);
 
 }
 
