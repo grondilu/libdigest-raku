@@ -51,12 +51,9 @@ multi rmd160(Blob $data) {
     blob8.new: (
       reduce
 	-> blob32 $h, @words {
-	  my buf32 ($X, $Y) = buf32.new($h).clone xx 2;
-	  for ^80 -> $j {
-	      $X[] = [$X[4], rotl(($X[0] + @F[    $j  div 16](|$X[1..3]) + @words[r1[$j]] + @K1[$j]) mod 2**32, s1[$j]) + $X[4], $X[1], rotl($X[2], 10), $X[3]];
-	      $Y[] = [$Y[4], rotl(($Y[0] + @F[(79-$j) div 16](|$Y[1..3]) + @words[r2[$j]] + @K2[$j]) mod 2**32, s2[$j]) + $Y[4], $Y[1], rotl($Y[2], 10), $Y[3]];
-	  }
-	  blob32.new: $h[1,2,3,4,0] Z+ $X[2,3,4,0,1] Z+ $Y[3,4,0,1,2];
+	  blob32.new: $h[1,2,3,4,0]
+	  Z+ start { reduce -> $X, $j { blob32.new($X[4], rotl(($X[0] + @F[    $j  div 16](|$X[1..3]) + @words[r1[$j]] + @K1[$j]) mod 2**32, s1[$j]) + $X[4], $X[1], rotl($X[2], 10), $X[3]); }, $h.clone, |^80; }.result[2,3,4,0,1] 
+	  Z+ start { reduce -> $Y, $j { blob32.new($Y[4], rotl(($Y[0] + @F[(79-$j) div 16](|$Y[1..3]) + @words[r2[$j]] + @K2[$j]) mod 2**32, s2[$j]) + $Y[4], $Y[1], rotl($Y[2], 10), $Y[3]); }, $h.clone, |^80; }.result[3,4,0,1,2];
 	},
 	(BEGIN blob32.new(0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476, 0xc3d2e1f0)),
 	|blob32.new($b.rotor(4).map: { :256[@^x.reverse] }).rotor(16);

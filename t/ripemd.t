@@ -11,7 +11,7 @@ for (
   'abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq' => '12a053384a9c0c88e405a06c27dcf49ada62eb2b',
   'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789' => 'b0e20b6e3116640286ed3a87a5713079b21f5189',
   '1234567890' x 8 => '9b752e45573d4b39f4dbd3323cab82bf63326bfb',
-  #'a' x 1_000_000 => '52783243c1697bdbe16d37f97f68f08325dc1528'
+  'a' x 1_000_000 => '52783243c1697bdbe16d37f97f68f08325dc1528'
 ) {
   is rmd160(.key), Blob.new(parse-base(.value, 16).polymod(256 xx *).reverse), "RIPEMD('{.key.chars > 50 ?? .key.substr(0, 50) ~ "..." !! .key}')";
 }
