@@ -2,7 +2,7 @@
      "perl" : "6.*",
      "name" : "Digest",
      "license" : "Artistic-2.0",
-     "version" : "0.25.7",
+     "version" : "0.25.8",
      "description" : "Raku implementation of digest algorigthms.",
      "author" : "grondilu",
      "depends" : [ ],

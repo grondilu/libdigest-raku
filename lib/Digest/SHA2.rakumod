@@ -1,10 +1,10 @@
 #!/usr/bin/env raku
 unit module Digest::SHA2;
 
-proto sha224($) returns blob8 is export {*}
-proto sha256(|) returns blob8 is export {*}
-proto sha384($) returns blob8 is export {*}
-proto sha512(|) returns blob8 is export {*}
+proto sha224($)                 returns blob8 is export {*}
+proto sha256($, :$initial-hash) returns blob8 is export {*}
+proto sha384($)                 returns blob8 is export {*}
+proto sha512($, :$initial-hash) returns blob8 is export {*}
 
 multi sha224(Str $str) { samewith $str.encode }
 multi sha256(Str $str) { samewith $str.encode }
@@ -45,7 +45,10 @@ multi sha256(
   sub σ0 { rotr($^x,  7) +^ rotr($x, 18) +^ $x +>  3 }
   sub σ1 { rotr($^x, 17) +^ rotr($x, 19) +^ $x +> 10 }
 
-  return blob8.new: (
+  return blob8.new:
+  map |*.polymod(256 xx 3).reverse,
+  flat
+  (
     $initial-hash,
     |blob32.new(
       (
@@ -72,9 +75,7 @@ multi sha256(
 	  blob32.new: $T1 + $T2, |$h[^3], $h[3] + $T1, |$h[4..6];
 	}, $H, |^64;
     }
-  )
-  .flat
-  .map: |*.polymod(256 xx 3).reverse;
+  ).list
 
 }
 
@@ -99,43 +100,40 @@ multi sha512(
   sub σ1 { rotr($^x, 19) +^ rotr($x, 61) +^ $x +> 6 }
 
   blob8.new:
-  (
-    $initial-hash,
-    |blob64.new(
-      (
-	flat
-	@$data,
-	0x80,
-	0 xx (-($data + 1 + 16) mod 128),
-	(8*$data).polymod(256 xx 15).reverse;
-      )
-      .rotor(8)
-      .map: { :256[@$_] }
-    ).rotor(16)
-  ).reduce(
-    -> $H, $block {
-      blob64.new: map * mod 2**64, (
-	$H[] Z+ reduce -> blob64 $h, UInt $t {
-	  my uint64 ($T1, $T2) = map *%2**64,
-	    $h[7] + Σ1($h[4]) + Ch(|$h[4..6]) +
-	    (BEGIN blob64.new: map { frac 3√$_, 64 }, @primes[^80])[$t] +
-	    (
-	      (state buf64 $w .= new)[$t] = (
-		$t < 16 ?? $block[$t] !!
-		σ0($w[$t-15]) + $w[$t-7] + σ1($w[$t-2]) + $w[$t-16];
-	      ) % 2**64
-	    ),
-	    Σ0($h[0]) + Maj(|$h[0..2]);
-	  blob64.new:
-	    ($T1   + $T2) mod 2**64, |$h[0..2],
-	    ($h[3] + $T1) mod 2**64, |$h[4..6]
-	  ;
-	}, $H, |^80
-      )
-    }
-  )
-  .map:
-  |*.polymod(256 xx 7).reverse;
+    map |*.polymod(256 xx 7).reverse,
+    |reduce
+      -> $H, $block {
+	blob64.new: map * mod 2**64, (
+	  $H[] Z+ reduce -> blob64 $h, UInt $t {
+	    my uint64 ($T1, $T2) = map *%2**64,
+	      $h[7] + Σ1($h[4]) + Ch(|$h[4..6]) +
+	      (BEGIN blob64.new: map { frac 3√$_, 64 }, @primes[^80])[$t] +
+	      (
+		(state buf64 $w .= new)[$t] = (
+		  $t < 16 ?? $block[$t] !!
+		  σ0($w[$t-15]) + $w[$t-7] + σ1($w[$t-2]) + $w[$t-16];
+		) % 2**64
+	      ),
+	      Σ0($h[0]) + Maj(|$h[0..2]);
+	    blob64.new:
+	      ($T1   + $T2) mod 2**64, |$h[0..2],
+	      ($h[3] + $T1) mod 2**64, |$h[4..6]
+	    ;
+	  }, $H, |^80
+	)
+      },
+      $initial-hash,
+      |blob64.new(
+	(
+	  flat
+	  @$data,
+	  0x80,
+	  0 xx (-($data + 1 + 16) mod 128),
+	  (8*$data).polymod(256 xx 15).reverse;
+	)
+	.rotor(8)
+	.map: { :256[@$_] }
+      ).rotor(16)
   ;
 
 }
