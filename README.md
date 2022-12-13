@@ -7,7 +7,7 @@ in pure raku (no parrot or nqp:: code).
 ## Synopsis
 
 Nb.  Since commit 911c292688ad056a98285f7930297c5e1aea3bfb,
-there is no `Digest` module anymore, the submodules, `Digest::MD5`, `Digest::SH1` and
+there is no `Digest` module anymore, the submodules, `Digest::MD5`, `Digest::SHA1` and
 so on must be used directly.
 
 ```raku
