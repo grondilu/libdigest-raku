@@ -48,9 +48,23 @@ multi rmd160(Blob $data) {
       map |*.polymod(256 xx 3),
       |reduce
 	-> blob32 $h, @words {
-	  blob32.new: [Z+] $h[1,2,3,4,0], |await 
-	    start { (reduce -> $Z, $j { blob32.new($Z[4], rotl(($Z[0] + @F[    $j  div 16](|$Z[1..3]) + @words[r1[$j]] + @K1[$j]) mod 2**32, s1[$j]) + $Z[4], $Z[1], rotl($Z[2], 10), $Z[3]); }, $h, |^80 )[2,3,4,0,1] },
-	    start { (reduce -> $Z, $j { blob32.new($Z[4], rotl(($Z[0] + @F[(79-$j) div 16](|$Z[1..3]) + @words[r2[$j]] + @K2[$j]) mod 2**32, s2[$j]) + $Z[4], $Z[1], rotl($Z[2], 10), $Z[3]); }, $h, |^80 )[3,4,0,1,2] };
+	  blob32.new: [Z+] map {$_[[^5].rotate(++$)]}, $h, |await 
+	    map -> [&f, $r, @K, $s] {
+	      start {
+		reduce -> $A, $j {
+		  $A[4],
+		  rotl(
+		    ($A[0] + @F[&f($j) div 16](|$A[1..3]) + @words[$r[$j]] + @K[$j]) mod 2**32,
+		    $s[$j]
+		  ) + $A[4],
+		  $A[1],
+		  rotl($A[2], 10),
+		  $A[3]
+		}, $h, |^80
+	      }
+	    },
+	    (  +*, r1, @K1, s1),
+	    (79-*, r2, @K2, s2); 
 	},
 	(BEGIN blob32.new: 0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476, 0xc3d2e1f0),
 	|blob32.new(
