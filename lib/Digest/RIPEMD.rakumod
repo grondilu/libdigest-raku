@@ -43,12 +43,14 @@ multi rmd160(Blob $data) {
             map -> [ &a,$b,@c,$d ] {
               [&a,.($b),(flat @c »xx» 16),.($d)] given *.comb».parse-base(16)
             },
-            (  +*,
+            ( 
+              +*,
               "0123456789ABCDEF74D1A6F3C0952EB83AE49F812706DB5C19BA08C4D37FE56240597C2AE138B6FD",
               <0x00000000 0x5a827999 0x6ed9eba1 0x8f1bbcdc 0xa953fd4e>,
               "BEFC5879BDEF6798768DB97F7CF9B7DCBD67E9DFE8D65C75BCEFEF989E56865C9F5B68DC5CDEB856"
             ),
-            (79-*,
+            (
+              79-*,
               "5E7092B4D6F81A3C6B370D5AEF8C4912F5137E69B8C2A04D86413BF05C2D97AECFA4158762DE039B",
               <0x50a28be6 0x5c4dd124 0x6d703ef3 0x7a6d76e9 0x00000000>,
               "899BDFF5778BEEC69DF7C89B77C76FDB97FB866ECD5EDD75F58BEE6E69C9C5F885C9C5E68D65FDBB"
