@@ -1,8 +1,9 @@
 [![SparrowCI](https://ci.sparrowhub.io/project/gh-grondilu-libdigest-raku/badge)](https://ci.sparrowhub.io)
 # Digests in raku
 
-This is a [raku](https://raku.org/) module implementing some digest algorithms
-in pure raku (no parrot or nqp:: code).
+This is a [raku](https://raku.org/) repository implementing some digest algorithms.
+It also contains a `Digest::OpenSSL` module for native calls to some of the SHA functions,
+though these require OpenSSL 3.
 
 ## Synopsis
 
@@ -31,6 +32,12 @@ say sha3_256 "bonjour";
 
 use Digest::RIPEMD;
 say rmd160   "bye";
+
+# OpenSSL native calls
+{
+  use Digest::OpenSSL;
+  say sha256 "gűle gűle";
+}
 ```
     
 ## Features
