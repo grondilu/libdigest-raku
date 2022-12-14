@@ -1,9 +1,13 @@
 [![SparrowCI](https://ci.sparrowhub.io/project/gh-grondilu-libdigest-raku/badge)](https://ci.sparrowhub.io)
 # Digests in raku
 
-This is a [raku](https://raku.org/) repository implementing some digest algorithms.  By default
-the module uses a pure raku implementation, which is slow.  An OpenSSL `NativeCall` wrapper
-is used when the `DIGEST_METHOD` environment variable is set to `openssl`.  This wrapper
+This is a [raku](https://raku.org/) repository implementing some digest
+algorithms.
+
+By default the module uses a pure raku implementation, which is slow.  An
+[OpenSSL](http://www.openssl.org)
+[nativecall](https://docs.raku.org/language/nativecall) wrapper is used when
+the `DIGEST_METHOD` environment variable is set to "openssl".  This wrapper
 requires OpenSSL version 3 or above.
 
 ## Synopsis
