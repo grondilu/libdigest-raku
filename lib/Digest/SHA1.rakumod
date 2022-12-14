@@ -6,10 +6,8 @@ multi sha1(Str $str) { samewith $str.encode }
 
 INIT
   if %*ENV<DIGEST_METHOD> andthen m:i/^openssl$/ {
-    &sha1.wrap: sub ($input) {
-      use Digest::OpenSSL;
-      Digest::OpenSSL::sha1 $input;
-    }
+    use Digest::OpenSSL;
+    &sha1.wrap: &Digest::OpenSSL::sha1;
   }
 
 sub sha1-pad(blob8 $msg --> blob32) {

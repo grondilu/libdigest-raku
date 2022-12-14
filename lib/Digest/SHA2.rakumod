@@ -9,10 +9,10 @@ proto sha512(|cap) returns blob8 is export {*}
 INIT 
   if %*ENV<DIGEST_METHOD> andthen m:i/^openssl$/ {
     use Digest::OpenSSL;
-    &sha224.wrap: sub ($data) { Digest::OpenSSL::sha224 $data }
-    &sha256.wrap: sub ($data) { Digest::OpenSSL::sha256 $data }
-    &sha384.wrap: sub ($data) { Digest::OpenSSL::sha384 $data }
-    &sha512.wrap: sub ($data) { Digest::OpenSSL::sha512 $data }
+    &sha224.wrap: &Digest::OpenSSL::sha224;
+    &sha256.wrap: &Digest::OpenSSL::sha256;
+    &sha384.wrap: &Digest::OpenSSL::sha384;
+    &sha512.wrap: &Digest::OpenSSL::sha512;
   }
 
 multi sha224(Str $str) { samewith $str.encode }

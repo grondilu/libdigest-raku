@@ -12,7 +12,7 @@ multi rmd160(Str $str) { samewith $str.encode }
 INIT
   if %*ENV<DIGEST_METHOD> andthen m:i/^openssl$/ {
     use Digest::OpenSSL;
-    &rmd160.wrap: sub ($input) { Digest::OpenSSL::rmd160 $input; }
+    &rmd160.wrap: &Digest::OpenSSL::rmd160;
   }
  
 multi rmd160(Blob $data) {
