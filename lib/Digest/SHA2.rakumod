@@ -1,29 +1,19 @@
 #!/usr/bin/env raku
 unit module Digest::SHA2;
 
-=TODO
-Avoid copy-pastes!
+proto sha224($data) returns blob8 is export {*}
+proto sha256(|cap) returns blob8 is export {*}
+proto sha384($data) returns blob8 is export {*}
+proto sha512(|cap) returns blob8 is export {*}
 
-proto sha224($data) returns blob8 is export {
+INIT 
   if %*ENV<DIGEST_METHOD> andthen m:i/^openssl$/ {
-    use Digest::OpenSSL; Digest::OpenSSL::sha224 $data;
-  } else { {*} }
-}
-proto sha256(|cap) returns blob8 is export {
-  if %*ENV<DIGEST_METHOD> andthen m:i/^openssl$/ {
-    use Digest::OpenSSL; Digest::OpenSSL::sha256 |cap;
-  } else { {*} }
-}
-proto sha384($data) returns blob8 is export {
-  if %*ENV<DIGEST_METHOD> andthen m:i/^openssl$/ {
-    use Digest::OpenSSL; Digest::OpenSSL::sha384 $data;
-  } else { {*} }
-}
-proto sha512(|cap) returns blob8 is export {
-  if %*ENV<DIGEST_METHOD> andthen m:i/^openssl$/ {
-    use Digest::OpenSSL; Digest::OpenSSL::sha512 |cap;
-  } else { {*} }
-}
+    use Digest::OpenSSL;
+    &sha224.wrap: sub ($data) { Digest::OpenSSL::sha224 $data }
+    &sha256.wrap: sub ($data) { Digest::OpenSSL::sha256 $data }
+    &sha384.wrap: sub ($data) { Digest::OpenSSL::sha384 $data }
+    &sha512.wrap: sub ($data) { Digest::OpenSSL::sha512 $data }
+  }
 
 multi sha224(Str $str) { samewith $str.encode }
 multi sha256(Str $str) { samewith $str.encode }

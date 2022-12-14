@@ -6,12 +6,14 @@ http:#code.google.com/p/crypto-js/
 Copyright (c) 2009, Jeff Mott. All rights reserved.
 =end CREDITS
 
-proto rmd160($input) returns Blob is export {
-  if %*ENV<DIGEST_METHOD> andthen m:i/^openssl$/ {
-    use Digest::OpenSSL; Digest::OpenSSL::rmd160 $input;
-  } else { {*} }
-}
+proto rmd160($input) returns Blob is export {*}
 multi rmd160(Str $str) { samewith $str.encode }
+
+INIT
+  if %*ENV<DIGEST_METHOD> andthen m:i/^openssl$/ {
+    use Digest::OpenSSL;
+    &rmd160.wrap: sub ($input) { Digest::OpenSSL::rmd160 $input; }
+  }
  
 multi rmd160(Blob $data) {
 

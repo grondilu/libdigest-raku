@@ -1,13 +1,16 @@
 #!/usr/bin/env raku
 unit module Digest::SHA1;
 
-proto sha1($input) returns blob8 is export {
-  if %*ENV<DIGEST_METHOD> andthen m:i/^openssl$/ {
-    use Digest::OpenSSL;
-    Digest::OpenSSL::sha1 $input;
-  } else { {*} }
-}
+proto sha1($input) returns blob8 is export {*}
 multi sha1(Str $str) { samewith $str.encode }
+
+INIT
+  if %*ENV<DIGEST_METHOD> andthen m:i/^openssl$/ {
+    &sha1.wrap: sub ($input) {
+      use Digest::OpenSSL;
+      Digest::OpenSSL::sha1 $input;
+    }
+  }
 
 sub sha1-pad(blob8 $msg --> blob32) {
   my $bits = 8 * $msg;
@@ -45,4 +48,3 @@ multi sha1(blob8 $msg) {
     |map { blob32.new: @$_ }, (sha1-pad $msg).rotor(16);
   ).map: |*.polymod(256 xx 3).reverse
 }
-
