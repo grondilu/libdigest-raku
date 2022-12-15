@@ -1,7 +1,7 @@
 #!/usr/bin/env raku
 unit module Digest::SHA1;
 
-proto sha1($input) returns blob8 is export {*}
+proto sha1($) returns blob8 is export {*}
 multi sha1(Str $str) { samewith $str.encode }
 
 INIT

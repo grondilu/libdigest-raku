@@ -6,7 +6,7 @@ http:#code.google.com/p/crypto-js/
 Copyright (c) 2009, Jeff Mott. All rights reserved.
 =end CREDITS
 
-proto rmd160($input) returns Blob is export {*}
+proto rmd160($) returns Blob is export {*}
 multi rmd160(Str $str) { samewith $str.encode }
 
 INIT

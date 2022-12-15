@@ -1,10 +1,10 @@
 #!/usr/bin/env raku
 unit module Digest::SHA2;
 
-proto sha224($data) returns blob8 is export {*}
-proto sha256(|cap) returns blob8 is export {*}
-proto sha384($data) returns blob8 is export {*}
-proto sha512(|cap) returns blob8 is export {*}
+proto sha224($) returns blob8 is export {*}
+proto sha256(|) returns blob8 is export {*}
+proto sha384($) returns blob8 is export {*}
+proto sha512(|) returns blob8 is export {*}
 
 INIT 
   if %*ENV<DIGEST_METHOD> andthen m:i/^openssl$/ {
