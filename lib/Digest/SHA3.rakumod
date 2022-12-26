@@ -5,22 +5,24 @@ our proto sha3_224($) is export {*}
 our proto sha3_256($) is export {*}
 our proto sha3_384($) is export {*}
 our proto sha3_512($) is export {*}
-our proto shake128($, UInt $) is export {*}
-our proto shake256($, UInt $) is export {*}
+our proto shake128($, $) is export {*}
+our proto shake256($, $) is export {*}
 
 multi sha3_224(Str $str) { samewith $str.encode }
 multi sha3_256(Str $str) { samewith $str.encode }
 multi sha3_384(Str $str) { samewith $str.encode }
 multi sha3_512(Str $str) { samewith $str.encode }
-multi shake128(Str $str, $n) { samewith $str.encode, $n }
-multi shake256(Str $str, $n) { samewith $str.encode, $n }
+multi shake128(Str $str, UInt $n) { samewith $str.encode, $n }
+multi shake256(Str $str, UInt $n) { samewith $str.encode, $n }
+multi shake256(Str $str, Whatever) { samewith $str.encode, * }
 
-multi sha3_224(Blob $input) { Keccak $input, delimitedSuffix => 0x06, outputByteLen => 224 div 8, rate => 1152, capacity => 448 }
-multi sha3_256(Blob $input) { Keccak $input, delimitedSuffix => 0x06, outputByteLen => 256 div 8, rate => 1088, capacity => 512 }
-multi sha3_384(Blob $input) { Keccak $input, delimitedSuffix => 0x06, outputByteLen => 384 div 8, rate =>  832, capacity => 768 }
-multi sha3_512(Blob $input) { Keccak $input, delimitedSuffix => 0x06, outputByteLen => 512 div 8, rate =>  576, capacity => 1024 }
+multi sha3_224(Blob $input) { [~] Keccak $input, delimitedSuffix => 0x06, outputByteLen => 224 div 8, rate => 1152, capacity => 448 }
+multi sha3_256(Blob $input) { [~] Keccak $input, delimitedSuffix => 0x06, outputByteLen => 256 div 8, rate => 1088, capacity => 512 }
+multi sha3_384(Blob $input) { [~] Keccak $input, delimitedSuffix => 0x06, outputByteLen => 384 div 8, rate =>  832, capacity => 768 }
+multi sha3_512(Blob $input) { [~] Keccak $input, delimitedSuffix => 0x06, outputByteLen => 512 div 8, rate =>  576, capacity => 1024 }
 multi shake128(Blob $input, UInt $outputByteLen) { Keccak $input, delimitedSuffix => 0x1F, :$outputByteLen, rate => 1344, capacity => 256 }
 multi shake256(Blob $input, UInt $outputByteLen) { Keccak $input, delimitedSuffix => 0x1F, :$outputByteLen, rate => 1088, capacity => 512 }
+multi shake256(Blob $input, Whatever) { Keccak $input, delimitedSuffix => 0x1F, rate => 1088, capacity => 512 }
 
 =for CREDITS
 The following is a straight-forward translation of
@@ -77,12 +79,19 @@ multi KeccakF1600(blob8 $state) {
   return $new-state;
 }
 
-our sub Keccak(
+our proto Keccak(
   Blob $inputBytes,
   byte :$delimitedSuffix,
   UInt :$outputByteLen is copy,
   UInt :$rate where * %% 8,
   UInt :$capacity where $rate + $capacity == 1600,
+) {*}
+
+multi Keccak(
+  $inputBytes,
+  :$delimitedSuffix,
+  :$rate,
+  :$capacity
 ) {
 
   my buf8 $outputBytes .= new;
@@ -113,13 +122,27 @@ our sub Keccak(
   $state .= &KeccakF1600;
   
   # === Squeeze out all the output blocks ===
-  while $outputByteLen > 0 {
-    $blockSize = min $outputByteLen, $rateInBytes;
-    $outputBytes ~= $state.subbuf: 0, $blockSize;
-    $outputByteLen -= $blockSize;
-    $state .= &KeccakF1600 if $outputByteLen > 0;
+  gather loop {
+    take $state.subbuf: 0, $rateInBytes;
+    $state .= &KeccakF1600;
   }
-  return $outputBytes
+
+}
+
+multi Keccak(
+  $inputBytes,
+  :$delimitedSuffix,
+  :$outputByteLen is copy,
+  :$rate,
+  :$capacity,
+) {
+  gather for samewith $inputBytes, :$delimitedSuffix, :$rate, :$capacity {
+    # === Squeeze out all the output blocks ===
+    my $blockSize = min $outputByteLen, .elems;
+    take .subbuf: 0, $blockSize;
+    $outputByteLen -= $blockSize;
+    last if $outputByteLen ≤ 0;
+  }
 }
 
 # vim: ft=raku
