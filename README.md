@@ -62,6 +62,8 @@ Currently implemented:
   - sha3\_256
   - sha3\_384
   - sha3\_512
+  - shake128
+  - shake256
 * Digest::RIPEMD :
   - rmd160
 

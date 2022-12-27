@@ -13,6 +13,7 @@ multi sha3_256(Str $str) { samewith $str.encode }
 multi sha3_384(Str $str) { samewith $str.encode }
 multi sha3_512(Str $str) { samewith $str.encode }
 multi shake128(Str $str, UInt $n) { samewith $str.encode, $n }
+multi shake128(Str $str, Whatever) { samewith $str.encode, * }
 multi shake256(Str $str, UInt $n) { samewith $str.encode, $n }
 multi shake256(Str $str, Whatever) { samewith $str.encode, * }
 
@@ -21,13 +22,13 @@ multi sha3_256(Blob $input) { [~] Keccak $input, delimitedSuffix => 0x06, output
 multi sha3_384(Blob $input) { [~] Keccak $input, delimitedSuffix => 0x06, outputByteLen => 384 div 8, rate =>  832, capacity => 768 }
 multi sha3_512(Blob $input) { [~] Keccak $input, delimitedSuffix => 0x06, outputByteLen => 512 div 8, rate =>  576, capacity => 1024 }
 multi shake128(Blob $input, UInt $outputByteLen) { Keccak $input, delimitedSuffix => 0x1F, :$outputByteLen, rate => 1344, capacity => 256 }
+multi shake128(Blob $input, Whatever)            { Keccak $input, delimitedSuffix => 0x1F,                  rate => 1344, capacity => 256 }
 multi shake256(Blob $input, UInt $outputByteLen) { Keccak $input, delimitedSuffix => 0x1F, :$outputByteLen, rate => 1088, capacity => 512 }
-multi shake256(Blob $input, Whatever) { Keccak $input, delimitedSuffix => 0x1F, rate => 1088, capacity => 512 }
+multi shake256(Blob $input, Whatever)            { Keccak $input, delimitedSuffix => 0x1F,                  rate => 1088, capacity => 512 }
 
 =for CREDITS
 The following is a straight-forward translation of
 L<https://github.com/XKCP/XKCP/blob/master/Standalone/CompactFIPS202/Python/CompactFIPS202.py>
-
 
 sub ROL64 { ($^a +> (64 - $_) +| $a +< $_) % (1 +< 64) given $^n%64 }
 
