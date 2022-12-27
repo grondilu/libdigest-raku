@@ -40,7 +40,7 @@ say rmd160   "Saluton";
 
 say shake256 "Merhaba", 16;
 
-# This will keep speewing blocks
+# This will keep printing blocks
 .say for shake256 "नमस्ते", *;
 ```
     
