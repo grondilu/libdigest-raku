@@ -32,12 +32,11 @@ say sha1     "Hola";
 use Digest::SHA2;
 say sha256   "Привет"; 
 
-use Digest::SHA3;
-say sha3_256 "Bonjour";
-
 use Digest::RIPEMD;
 say rmd160   "Saluton";
 
+use Digest::SHA3;
+say sha3_256 "Bonjour";
 say shake256 "Merhaba", 16;
 
 # This will keep printing blocks
