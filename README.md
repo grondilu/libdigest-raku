@@ -33,14 +33,15 @@ use Digest::SHA2;
 say sha256   "Привет"; 
 
 use Digest::SHA3;
-say sha3_256 "bonjour";
+say sha3_256 "Bonjour";
 
 use Digest::RIPEMD;
-say rmd160   "bye";
+say rmd160   "Saluton";
 
-# OpenSSL native calls
-%*ENV<DIGEST_METHOD> = 'openssl';
-say sha256 "gűle gűle";
+say shake256 "Merhaba", 16;
+
+# This will keep speewing blocks
+.say for shake256 "नमस्ते", *;
 ```
     
 ## Features
