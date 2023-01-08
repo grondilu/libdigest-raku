@@ -1,4 +1,4 @@
-unit module Digest::HMAC;
+unit module HMAC;
 
 proto hmac(
   :$key,
