@@ -4,7 +4,8 @@
      "license" : "Artistic-2.0",
      "version" : "0.28.0",
      "description" : "Raku implementation of digest algorigthms.",
-     "author" : "grondilu",
+     "authors" : "Lucien Grondin",
+     "auth"    : "zef:grondilu",
      "depends" : [ ],
      "provides" : {
 	 "HMAC"           : "lib/HMAC.rakumod",
