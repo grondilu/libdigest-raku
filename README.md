@@ -19,7 +19,7 @@ so on must be used directly.
 ```raku
 use Digest::MD5;
 say md5      "hello";
-use Digest::HMAC;
+use HMAC;
 say hmac
   key => "key",
   msg => "The quick brown fox jumps over the lazy dog", 
@@ -47,9 +47,10 @@ say shake256 "Merhaba", 16;
 
 Currently implemented:
 
+* HMAC
+  - hmac
 * Digest
   - md5
-  - hmac
 * Digest::SHA1
   - sha1
 * Digest::SHA2
