@@ -4,12 +4,6 @@ unit module Digest::SHA1;
 proto sha1($) returns blob8 is export {*}
 multi sha1(Str $str) { samewith $str.encode }
 
-INIT
-  if %*ENV<DIGEST_METHOD> andthen m:i/^openssl$/ {
-    use Digest::OpenSSL;
-    &sha1.wrap: &Digest::OpenSSL::sha1;
-  }
-
 sub sha1-pad(blob8 $msg --> blob32) {
   my $bits = 8 * $msg;
   blob32.new:

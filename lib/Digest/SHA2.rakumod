@@ -2,18 +2,9 @@
 unit module Digest::SHA2;
 
 proto sha224($) returns blob8 is export {*}
-proto sha256(|) returns blob8 is export {*}
+proto sha256($, :$initial-hash) returns blob8 is export {*}
 proto sha384($) returns blob8 is export {*}
-proto sha512(|) returns blob8 is export {*}
-
-INIT 
-  if %*ENV<DIGEST_METHOD> andthen m:i/^openssl$/ {
-    use Digest::OpenSSL;
-    &sha224.wrap: &Digest::OpenSSL::sha224;
-    &sha256.wrap: &Digest::OpenSSL::sha256;
-    &sha384.wrap: &Digest::OpenSSL::sha384;
-    &sha512.wrap: &Digest::OpenSSL::sha512;
-  }
+proto sha512($, :$initial-hash) returns blob8 is export {*}
 
 multi sha224(Str $str) { samewith $str.encode }
 multi sha256(Str $str) { samewith $str.encode }

@@ -9,12 +9,6 @@ Copyright (c) 2009, Jeff Mott. All rights reserved.
 proto rmd160($) returns Blob is export {*}
 multi rmd160(Str $str) { samewith $str.encode }
 
-INIT
-  if %*ENV<DIGEST_METHOD> andthen m:i/^openssl$/ {
-    use Digest::OpenSSL;
-    &rmd160.wrap: &Digest::OpenSSL::rmd160;
-  }
- 
 multi rmd160(Blob $data) {
 
   sub rotl(uint32 $n, $b) { $n +< $b +| $n +> (32 - $b) }
