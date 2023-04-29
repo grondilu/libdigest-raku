@@ -1,5 +1,6 @@
 #!/usr/bin/env raku
 use Test;
+use lib <lib>;
 use Digest::MD5;
 
 subtest 'rfc1321', {

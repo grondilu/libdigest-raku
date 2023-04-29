@@ -2,6 +2,7 @@
 # https://www.rfc-editor.org/rfc/rfc4231
 #
 use Test;
+use lib <lib>;
 use HMAC;
 use Digest::SHA2;
 

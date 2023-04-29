@@ -1,5 +1,6 @@
 #!/usr/bin/env raku
 use Test;
+use lib <lib>;
 use Digest::RIPEMD;
 
 for (
