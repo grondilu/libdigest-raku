@@ -1,4 +1,4 @@
-#/usr/bin/env raku
+#!/usr/bin/env raku
 # https://www.rfc-editor.org/rfc/rfc4231
 #
 use Test;
