@@ -3,10 +3,10 @@ unit module Digest::MD5;
 proto md5($msg) returns Blob is export {*}
 multi md5(Str $msg) { md5 $msg.encode }
 multi md5(Blob $msg) {
-  sub little-endian($w, $n, *@v) { (@v X+> flat ($w X* ^$n)) X% (2 ** $w) }
   my \bits = 8 * $msg.elems;
-  Blob.new: little-endian 8, 4,
-    |reduce -> Blob $blob, blob32 $X {
+  my buf8 $buf .= new;
+  $buf.write-uint32: $buf.elems, $_, LittleEndian for
+    reduce -> Blob $blob, blob32 $X {
       blob32.new: $blob Z+
         reduce -> $b, $i {
           blob32.new: 
@@ -30,10 +30,14 @@ multi md5(Blob $msg) {
     },
     (BEGIN blob32.new: 0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476),
     |map { blob32.new: @$_ },
-      blob32.new(flat(@$msg, 0x80, 0x00 xx (-(bits div 8 + 1 + 8) % 64))
-        .rotor(4).map({ :256[@^a.reverse] }), |little-endian(32, 2, bits)
-      )
+      {
+	$^b.push($_) for (@$msg, 0x80, 0x00 xx (-(bits div 8 + 1 + 8) % 64))
+	    .flat.rotor(4).map({ :256[@^a.reverse] });
+	$b.write-uint64: $b.elems, bits, LittleEndian;
+	$b;
+      }(buf32.new)
     .rotor(16);
+    $buf;
 }
 
 # vi: ft=raku
