@@ -1,4 +1,4 @@
-[![SparrowCI](https://ci.sparrowhub.io/project/gh-grondilu-libdigest-raku/badge)](https://ci.sparrowhub.io)
+![Sparky](https://sparky.sparrowhub.io/badge/grondilu-libdigest-raku?foo=bar)
 # Digests in raku
 
 This is a pure [raku](https://raku.org/) repository implementing some digest
